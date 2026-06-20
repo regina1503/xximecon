@@ -1,0 +1,1248 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title id="page-title">Evento — Confirmación de Asistencia</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link id="font-link" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+
+  <style>
+    :root {
+      --accent:#C9A84C; --accent-dark:#8B6914; --accent-light:#E8D5A3;
+      --bg:#FAF7F2; --surface:#FFFFFF; --header-bg:#1A1612;
+      --dark:#1A1612; --muted:#6B5E4E; --rose:#D4847A;
+      --font-display:'Cormorant Garamond',serif;
+      --font-body:'Jost',sans-serif;
+    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{background:var(--bg);color:var(--dark);font-family:var(--font-body);overflow-x:hidden}
+    ::-webkit-scrollbar{width:6px}
+    ::-webkit-scrollbar-track{background:var(--bg)}
+    ::-webkit-scrollbar-thumb{background:var(--accent);border-radius:3px}
+    #app{min-height:100vh;padding:0 0 5rem;position:relative;z-index:10}
+    #sparkle-canvas{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:1}
+
+    /* ── HEADER ── */
+    .header{text-align:center;padding:3.5rem 1rem 2rem;border-bottom:.5px solid #DDD3C5;background:linear-gradient(180deg,#F5EFE4 0%,var(--bg) 100%);position:relative}
+    .header::before{content:'✦';display:block;font-size:18px;color:var(--accent);margin-bottom:.5rem;letter-spacing:12px}
+    .header h1{font-family:var(--font-display);font-size:40px;font-weight:300;letter-spacing:3px;color:var(--dark);line-height:1.2}
+    .header h1 em{font-style:italic;color:var(--accent-dark);font-weight:400}
+    .header .subtitle{font-size:12px;letter-spacing:4px;text-transform:uppercase;color:var(--muted);margin-top:8px}
+    .header .event-date{font-family:var(--font-display);font-size:16px;color:var(--muted);margin-top:10px;font-style:italic}
+    .ornament{text-align:center;color:var(--accent-light);font-size:14px;letter-spacing:8px;margin:1.5rem 0}
+
+    /* ── SCREENS ── */
+    .screen{display:none;padding:1.5rem 1.25rem}
+    .screen.active{display:block;animation:fadeIn .45s ease-out}
+    @keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+
+    /* ── SEARCH ── */
+    .search-section{max-width:500px;margin:0 auto}
+    .search-label{font-family:var(--font-display);font-size:24px;font-weight:300;text-align:center;color:var(--dark);margin-bottom:.4rem}
+    .search-hint{font-size:13px;text-align:center;color:var(--muted);margin-bottom:1.5rem;font-weight:300}
+    .search-box{position:relative;margin-bottom:1rem}
+    .search-box input{width:100%;padding:14px 16px 14px 44px;border:.5px solid #C8BAA6;border-radius:4px;font-family:var(--font-body);font-size:15px;background:var(--surface);color:var(--dark);outline:none;transition:border-color .2s,box-shadow .2s}
+    .search-box input:focus{border-color:var(--accent);box-shadow:0 0 8px rgba(201,168,76,.15)}
+    .search-box i{position:absolute;left:16px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:18px}
+    .results-list{list-style:none;background:var(--surface);border:.5px solid #C8BAA6;border-radius:4px;overflow:hidden;max-height:280px;overflow-y:auto;box-shadow:0 4px 12px rgba(0,0,0,.05)}
+    .results-list li{padding:14px 18px;border-bottom:.5px solid #EDE5D8;cursor:pointer;display:flex;align-items:center;justify-content:space-between;transition:background .15s}
+    .results-list li:last-child{border-bottom:none}
+    .results-list li:hover{background:#FAF5EC}
+    .guest-name{font-size:15px;color:var(--dark);font-weight:500}
+    .no-results{padding:2.5rem 1rem;text-align:center;color:var(--muted);font-size:14px;font-style:italic}
+
+    /* ── CONFIRM CARD ── */
+    .confirm-card{max-width:460px;margin:0 auto;background:var(--surface);border:.5px solid #C8BAA6;border-radius:6px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,.04)}
+    .confirm-header{background:var(--header-bg);padding:1.75rem;text-align:center}
+    .confirm-header .guest-label{font-size:11px;letter-spacing:3px;text-transform:uppercase;color:var(--accent-light);margin-bottom:6px}
+    .confirm-header .guest-full-name{font-family:var(--font-display);font-size:28px;font-weight:300;color:white;letter-spacing:1px}
+    .confirm-body{padding:1.75rem}
+    .confirm-question{font-family:var(--font-display);font-size:22px;font-weight:300;text-align:center;color:var(--dark);margin-bottom:1.5rem}
+    .confirm-buttons{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:1.5rem}
+    .btn-confirm{padding:14px;border:.5px solid #C8BAA6;border-radius:4px;font-family:var(--font-body);font-size:14px;font-weight:500;cursor:pointer;transition:all .2s;letter-spacing:1px;background:var(--surface);color:var(--dark);display:flex;align-items:center;justify-content:center;gap:8px}
+    .btn-yes{border-color:#8BA86B;color:#3A6B20}
+    .btn-no{border-color:#C4958E;color:#8B2020}
+    .btn-yes:hover,.btn-yes.selected{background:#8BA86B;color:white;border-color:#8BA86B;box-shadow:0 4px 10px rgba(139,168,107,.25)}
+    .btn-no:hover,.btn-no.selected{background:var(--rose);color:white;border-color:var(--rose);box-shadow:0 4px 10px rgba(212,132,122,.25)}
+    .field-label{font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:6px;display:block;font-weight:500}
+    .guests-count{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:1rem}
+    .form-select,.form-input{width:100%;padding:12px 14px;border:.5px solid #C8BAA6;border-radius:4px;font-family:var(--font-body);font-size:14px;background:var(--surface);color:var(--dark);outline:none;transition:border-color .2s}
+    .form-select:focus,.form-input:focus{border-color:var(--accent)}
+    .btn-submit{width:100%;padding:15px;background:var(--dark);color:white;border:none;border-radius:4px;font-family:var(--font-body);font-size:13px;letter-spacing:3px;text-transform:uppercase;cursor:pointer;margin-top:1.25rem;transition:background .2s,transform .1s;font-weight:500}
+    .btn-submit:hover{background:#2D2620}
+    .btn-submit:active{transform:scale(.99)}
+    .btn-back{background:none;border:none;color:var(--muted);font-family:var(--font-body);font-size:13px;cursor:pointer;display:flex;align-items:center;gap:6px;padding:0;margin-bottom:1.5rem;transition:color .15s}
+    .btn-back:hover{color:var(--dark)}
+
+    /* ── QR SCREEN ── */
+    .qr-card{max-width:420px;margin:0 auto;text-align:center}
+    .qr-success{display:flex;align-items:center;justify-content:center;gap:8px;background:#EAF3DE;border-radius:4px;padding:12px 18px;margin-bottom:1.5rem;font-size:14px;color:#3A6B20;font-weight:500;border:.5px solid rgba(58,107,32,.15)}
+    .qr-wrapper{background:var(--surface);border:.5px solid #C8BAA6;border-radius:6px;padding:1.75rem;margin-bottom:1.5rem;box-shadow:0 4px 15px rgba(0,0,0,.03)}
+    .qr-name{font-family:var(--font-display);font-size:26px;font-weight:300;color:var(--dark);margin-bottom:4px}
+    .qr-event-name{font-size:12px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:1.5rem;font-weight:400}
+    .qr-detail{font-size:13px;color:var(--muted);display:flex;justify-content:space-between;padding:8px 0;border-top:.5px solid #EDE5D8}
+    .qr-detail span:last-child{color:var(--dark);font-weight:500}
+    #qr-container{width:200px;height:200px;margin:0 auto 1.5rem;display:flex;align-items:center;justify-content:center;background:#fff;border-radius:4px}
+    #qr-container img,#qr-container canvas{max-width:100%;max-height:100%;display:block}
+    .download-btn{width:100%;padding:14px;background:var(--accent-dark);color:white;border:none;border-radius:4px;font-family:var(--font-body);font-size:13px;letter-spacing:2px;text-transform:uppercase;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:filter .2s,transform .15s;font-weight:500}
+    .download-btn:hover{filter:brightness(.85)}
+    .hint-save{font-size:12px;color:var(--muted);margin-top:12px;font-style:italic}
+
+    /* ── DECLINED ── */
+    .declined-card{max-width:400px;margin:0 auto;text-align:center;padding:3rem 1.5rem;background:var(--surface);border:.5px solid #C8BAA6;border-radius:6px}
+    .declined-icon{font-size:44px;color:#C4958E;margin-bottom:1.25rem}
+    .declined-title{font-family:var(--font-display);font-size:28px;font-weight:300;color:var(--dark);margin-bottom:10px}
+    .declined-msg{font-size:14px;color:var(--muted);line-height:1.6;margin-bottom:1.5rem}
+
+    /* ── ADMIN ── */
+    .admin-toggle{text-align:center;margin-top:3rem;padding-top:2rem;border-top:.5px solid #DDD3C5;max-width:900px;margin-left:auto;margin-right:auto;padding-left:1rem;padding-right:1rem}
+    .admin-link{font-size:12px;color:#B4A48C;letter-spacing:1px;cursor:pointer;border:none;background:none;font-family:var(--font-body);transition:color .15s;display:inline-flex;align-items:center;gap:4px}
+    .admin-link:hover{color:var(--accent-dark)}
+    .admin-panel-box{background:var(--surface);border:.5px solid #C8BAA6;border-radius:6px;overflow:hidden;margin-top:1.5rem;box-shadow:0 4px 15px rgba(0,0,0,.03)}
+    .admin-head{background:#F5EFE4;padding:1.25rem 1.5rem;display:flex;align-items:center;justify-content:space-between;border-bottom:.5px solid #DDD3C5}
+    .admin-head h3{font-family:var(--font-display);font-size:20px;font-weight:500;color:var(--dark)}
+    .stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:0;border-bottom:.5px solid #EDE5D8}
+    .stat-cell{padding:1.25rem .5rem;text-align:center;border-right:.5px solid #EDE5D8}
+    .stat-cell:last-child{border-right:none}
+    .stat-num{font-family:var(--font-display);font-size:28px;font-weight:300;line-height:1.1}
+    .stat-lbl{font-size:10px;letter-spacing:1.2px;text-transform:uppercase;color:var(--muted);margin-top:4px;font-weight:500}
+    .admin-list{max-height:350px;overflow-y:auto}
+    .admin-row{display:flex;align-items:center;padding:12px 1.5rem;border-bottom:.5px solid #F0E8DC;gap:12px}
+    .admin-row:last-child{border-bottom:none}
+    .badge{font-size:11px;padding:3px 10px;border-radius:20px;font-weight:500}
+    .badge-p{background:#F5EDE0;color:#8B6914}
+    .badge-c{background:#E0EDD6;color:#3A6B20}
+    .badge-d{background:#F5E0E0;color:#8B2020}
+    .add-guest-row{padding:1.25rem 1.5rem;border-top:.5px solid #DDD3C5;background:#FAF8F5;flex-wrap:wrap;display:flex;gap:10px;align-items:flex-end}
+    .add-input{padding:10px 12px;border:.5px solid #C8BAA6;border-radius:4px;font-family:var(--font-body);font-size:13px;background:var(--surface);color:var(--dark);outline:none}
+    .add-input:focus{border-color:var(--accent)}
+    .btn-add{padding:10px 18px;background:var(--dark);color:white;border:none;border-radius:4px;font-family:var(--font-body);font-size:13px;cursor:pointer;transition:background .15s;white-space:nowrap}
+    .btn-add:hover{background:#2D2620}
+
+    /* ── SETTINGS ── */
+    .settings-section{padding:1.5rem;border:.5px solid #DDD3C5;border-radius:6px;background:#FAF8F5;margin-top:1.5rem}
+    .settings-section h4{font-family:var(--font-display);font-size:20px;font-weight:500;color:var(--dark);margin-bottom:1rem;padding-bottom:8px;border-bottom:.5px solid #DDD3C5}
+    .settings-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:12px;margin-bottom:12px}
+    .settings-field{display:flex;flex-direction:column;gap:4px}
+    .settings-field label{font-size:11px;letter-spacing:1.2px;text-transform:uppercase;color:var(--muted);font-weight:500}
+    .settings-field input,.settings-field select{padding:9px 12px;border:.5px solid #C8BAA6;border-radius:4px;font-family:var(--font-body);font-size:13px;background:var(--surface);color:var(--dark);outline:none}
+    .settings-field input:focus,.settings-field select:focus{border-color:var(--accent)}
+    .settings-field input[type=color]{padding:3px 5px;height:36px;cursor:pointer}
+    .btn-save-settings{padding:10px 20px;background:var(--accent-dark);color:white;border:none;border-radius:4px;font-family:var(--font-body);font-size:13px;cursor:pointer;transition:filter .15s;font-weight:500}
+    .btn-save-settings:hover{filter:brightness(.85)}
+    .theme-presets{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
+    .theme-swatch{width:26px;height:26px;border-radius:50%;cursor:pointer;border:2px solid transparent;transition:transform .15s,border-color .15s}
+    .theme-swatch:hover,.theme-swatch.active{transform:scale(1.2);border-color:var(--dark)}
+
+    /* ── MODALS ── */
+    .modal-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(26,22,18,.6);backdrop-filter:blur(4px);z-index:1000;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .3s}
+    .modal-overlay.active{opacity:1;pointer-events:auto}
+    .modal-box{background:var(--surface);border:1px solid var(--accent);border-radius:8px;width:90%;max-width:420px;padding:2rem;text-align:center;box-shadow:0 15px 35px rgba(0,0,0,.2);transform:scale(.9);transition:transform .3s}
+    .modal-overlay.active .modal-box{transform:scale(1)}
+    .pin-input-container{display:flex;justify-content:center;gap:12px;margin:1.5rem 0}
+    .pin-digit{width:50px;height:50px;border:1px solid #C8BAA6;border-radius:6px;text-align:center;font-size:24px;font-weight:600;color:var(--dark);background:#FAF7F2;outline:none;transition:border-color .2s,box-shadow .2s}
+    .pin-digit:focus{border-color:var(--accent);box-shadow:0 0 5px rgba(201,168,76,.3)}
+    .modal-btn-row{display:flex;gap:8px;justify-content:center;margin-top:16px}
+    .btn-modal-cancel{padding:8px 16px;font-size:12px;border:.5px solid #C8BAA6;border-radius:4px;background:none;cursor:pointer;font-family:var(--font-body);color:var(--muted)}
+    .btn-modal-ok{padding:8px 20px;font-size:12px;background:var(--dark);color:white;border:none;border-radius:4px;cursor:pointer;font-family:var(--font-body);font-weight:500}
+
+    /* ── TOAST ── */
+    #toast{position:fixed;bottom:24px;right:24px;z-index:10000;transform:translateY(100px);opacity:0;transition:all .35s cubic-bezier(.175,.885,.32,1.275);background:#1A1612;color:white;padding:12px 20px;border-radius:6px;box-shadow:0 10px 25px rgba(0,0,0,.15);border:1px solid rgba(201,168,76,.3);display:flex;align-items:center;gap:10px;font-size:13px;pointer-events:none}
+    #toast.show{transform:translateY(0);opacity:1}
+    #toast i{color:var(--accent-light);font-size:18px}
+
+    /* QR scanner */
+    #qr-scanner-container{display:none;background:#FAF7F2;border:1px dashed var(--accent);border-radius:6px;padding:1rem;margin-bottom:1.5rem;text-align:center}
+
+    /* Edit button */
+    .btn-edit{color:var(--accent-dark);background:none;border:none;cursor:pointer;font-size:18px;padding:3px;transition:color .15s}
+    .btn-edit:hover{color:var(--dark)}
+
+    /* Edit form in modal */
+    .edit-form{text-align:left;margin-top:1rem}
+    .edit-field{margin-bottom:12px}
+    .edit-field label{display:block;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:4px;font-weight:500}
+    .edit-field input,.edit-field select{width:100%;padding:10px 12px;border:.5px solid #C8BAA6;border-radius:4px;font-family:var(--font-body);font-size:14px;background:var(--surface);color:var(--dark);outline:none}
+    .edit-field input:focus,.edit-field select:focus{border-color:var(--accent)}
+
+    /* misc */
+    .section-divider{font-family:var(--font-display);font-size:18px;font-weight:500;color:var(--dark);padding:1rem 1.5rem .75rem;border-bottom:.5px solid #EDE5D8;background:#F9F4EB;display:flex;align-items:center;gap:8px}
+  </style>
+</head>
+<body>
+<canvas id="sparkle-canvas"></canvas>
+<div id="app">
+
+  <!-- HEADER -->
+  <div class="header">
+    <h1 id="header-title"><em>Evento</em></h1>
+    <p class="subtitle" id="header-subtitle">Confirmación de asistencia</p>
+    <p class="event-date" id="header-date">Fecha por definir</p>
+  </div>
+  <div class="ornament">· · ✦ · ·</div>
+
+  <!-- SCREEN 1: SEARCH -->
+  <div id="screen-search" class="screen active">
+    <div class="search-section">
+      <p class="search-label">Busca tu nombre</p>
+      <p class="search-hint">Escribe al menos 3 letras para encontrar tu invitación</p>
+      <div class="search-box">
+        <i class="ti ti-search"></i>
+        <input type="text" id="search-input" placeholder="Ej. María García..." autocomplete="off"/>
+      </div>
+      <ul class="results-list" id="results-list" style="display:none"></ul>
+    </div>
+  </div>
+
+  <!-- SCREEN 2: CONFIRM -->
+  <div id="screen-confirm" class="screen">
+    <div class="confirm-card">
+      <div class="confirm-header">
+        <p class="guest-label">Invitado</p>
+        <p class="guest-full-name" id="cf-name">—</p>
+      </div>
+      <div class="confirm-body">
+        <button class="btn-back" onclick="showScreen('search')"><i class="ti ti-arrow-left"></i> Volver</button>
+        <p class="confirm-question">¿Confirmas tu asistencia?</p>
+        <div class="confirm-buttons">
+          <button class="btn-confirm btn-yes" id="btn-yes" onclick="selectAttending(true)"><i class="ti ti-check"></i> Sí, asistiré</button>
+          <button class="btn-confirm btn-no" id="btn-no" onclick="selectAttending(false)"><i class="ti ti-x"></i> No podré ir</button>
+        </div>
+        <div id="pases-badge" class="hidden mb-4 p-3 rounded-md text-center text-sm font-medium flex items-center justify-center gap-2" style="background:#FAF5EC;border:.5px solid #E8D5A3;color:#8B6914;">
+          <i class="ti ti-ticket"></i>
+          <span>Tienes <strong id="pases-limite">0</strong> pases asignados</span>
+        </div>
+        <div id="yes-fields" style="display:none">
+          <div id="adult-kid-fields">
+            <div class="guests-count">
+              <div>
+                <label class="field-label">Adultos</label>
+                <select id="adults-count" class="form-select" onchange="validatePassLimit()"></select>
+              </div>
+              <div>
+                <label class="field-label">Niños</label>
+                <select id="kids-count" class="form-select" onchange="validatePassLimit()"></select>
+              </div>
+            </div>
+          </div>
+          <div id="general-passes-field" style="display:none">
+            <label class="field-label">Número de personas</label>
+            <select id="general-count" class="form-select" onchange="validatePassLimitGeneral()"></select>
+            <div style="height:12px"></div>
+          </div>
+          <div>
+            <label class="field-label">Restricción alimentaria (opcional)</label>
+            <input type="text" id="dietary" class="form-input" placeholder="Ej. vegetariano, sin gluten..."/>
+          </div>
+          <div id="limit-warning" class="hidden mt-3 p-2 rounded text-xs text-center font-medium" style="background:#F5E0E0;border:.5px solid #C4958E;color:#8B2020;">
+            El total excede tus pases asignados.
+          </div>
+        </div>
+        <button class="btn-submit" id="btn-submit" onclick="submitConfirmation()" style="display:none">Confirmar Respuesta</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SCREEN 3: QR -->
+  <div id="screen-qr" class="screen">
+    <div class="qr-card">
+      <div class="qr-success"><i class="ti ti-circle-check-filled"></i> ¡Asistencia confirmada!</div>
+      <div class="qr-wrapper">
+        <p class="qr-name" id="qr-name">—</p>
+        <p class="qr-event-name" id="qr-event-label">Evento</p>
+        <div id="qr-container"></div>
+        <div class="qr-detail"><span>Pases confirmados</span><span id="qr-pax">—</span></div>
+        <div class="qr-detail"><span>Código de acceso</span><span id="qr-code-text" style="font-family:monospace;font-weight:600;color:var(--accent-dark)">—</span></div>
+      </div>
+      <button class="download-btn" onclick="downloadQR()"><i class="ti ti-download"></i> Descargar Pase Digital</button>
+      <p class="hint-save">Guarda esta imagen para presentarla en la entrada</p>
+      <button style="margin-top:1.5rem;font-size:12px;color:var(--muted);background:none;border:none;cursor:pointer;text-decoration:underline;display:block;margin-left:auto;margin-right:auto" onclick="showScreen('search')">Volver al Inicio</button>
+    </div>
+  </div>
+
+  <!-- SCREEN 4: DECLINED -->
+  <div id="screen-declined" class="screen">
+    <div class="declined-card">
+      <div class="declined-icon"><i class="ti ti-heart-off"></i></div>
+      <p class="declined-title">Lamentamos que no puedas ir</p>
+      <p class="declined-msg">Hemos registrado tu respuesta. ¡Te extrañaremos y agradecemos tu oportuna respuesta!</p>
+      <button class="btn-submit" onclick="showScreen('search')">Volver al Buscador</button>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       ADMIN SECTION
+  ══════════════════════════════════════════ -->
+  <div class="admin-toggle">
+    <button class="admin-link" onclick="toggleAdmin()">
+      <i id="admin-lock-icon" class="ti ti-lock"></i>
+      <span>Panel de Administración</span>
+    </button>
+
+    <div id="admin-section" style="display:none">
+
+      <!-- Top actions -->
+      <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-top:1rem;margin-bottom:1rem">
+        <button style="font-size:12px;background:var(--accent-dark);color:white;padding:7px 14px;border-radius:4px;border:none;cursor:pointer;display:flex;align-items:center;gap:6px;font-family:var(--font-body);font-weight:500" onclick="toggleQRReader()">
+          <i class="ti ti-camera"></i> Escanear Pase QR
+        </button>
+        <button style="font-size:12px;background:var(--dark);color:white;padding:7px 14px;border-radius:4px;border:none;cursor:pointer;display:flex;align-items:center;gap:6px;font-family:var(--font-body)" onclick="logoutAdmin()">
+          <i class="ti ti-logout"></i> Cerrar Sesión
+        </button>
+      </div>
+
+      <!-- QR Scanner -->
+      <div id="qr-scanner-container">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+          <span style="font-size:11px;font-weight:600;color:#8B6914;text-transform:uppercase;letter-spacing:1px">Escáner de Accesos</span>
+          <button style="font-size:12px;color:var(--rose);background:none;border:none;cursor:pointer;font-family:var(--font-body)" onclick="toggleQRReader(false)">Apagar Cámara</button>
+        </div>
+        <div id="reader" style="width:100%;max-width:380px;margin:0 auto;overflow:hidden;border-radius:6px"></div>
+        <p style="font-size:11px;color:var(--muted);margin-top:8px;font-style:italic">Apunta al código QR del pase del invitado.</p>
+      </div>
+
+      <!-- ── SETTINGS ── -->
+      <div class="settings-section">
+        <h4>⚙ Configuración del Evento</h4>
+
+        <p style="font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);font-weight:500;margin-bottom:8px">Datos generales</p>
+        <div class="settings-grid">
+          <div class="settings-field">
+            <label>Tipo de Evento</label>
+            <select id="setting-event-type">
+              <option value="boda">Boda</option>
+              <option value="xv">XV Años</option>
+              <option value="cumpleanos">Cumpleaños</option>
+              <option value="bautizo">Bautizo</option>
+              <option value="graduacion">Graduación</option>
+              <option value="corporativo">Evento Corporativo</option>
+              <option value="otro">Otro</option>
+            </select>
+          </div>
+          <div class="settings-field">
+            <label>Nombre del Evento</label>
+            <input type="text" id="event-name-input" placeholder="Ej. Boda de Ana & Luis"/>
+          </div>
+          <div class="settings-field">
+            <label id="label-person1">Nombre Festejado 1</label>
+            <input type="text" id="setting-person1" placeholder="Sofía"/>
+          </div>
+          <div class="settings-field" id="field-person2">
+            <label>Nombre Festejado 2</label>
+            <input type="text" id="setting-person2" placeholder="Mateo"/>
+          </div>
+          <div class="settings-field">
+            <label>Fecha del Evento</label>
+            <input type="text" id="event-date-input" placeholder="Sáb. 14 Feb 2026"/>
+          </div>
+          <div class="settings-field">
+            <label>Hora del Evento</label>
+            <input type="text" id="event-time-input" placeholder="19:00 hrs"/>
+          </div>
+          <div class="settings-field">
+            <label>PIN Admin (4 dígitos)</label>
+            <input type="text" id="admin-pin-input" maxlength="4" style="text-align:center;letter-spacing:6px;font-weight:700"/>
+          </div>
+          <div class="settings-field">
+            <label>Tipo de pases</label>
+            <select id="setting-pass-type" onchange="updatePassTypeUI()">
+              <option value="adultokid">Adultos + Niños por separado</option>
+              <option value="general">Pases generales (sin distinción)</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- ── DISEÑO ── -->
+        <p style="font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);font-weight:500;margin-bottom:8px;margin-top:16px">Diseño y colores</p>
+        <div class="settings-grid">
+          <div class="settings-field">
+            <label>Color de Acento</label>
+            <input type="color" id="color-accent" value="#C9A84C" oninput="previewTheme()"/>
+          </div>
+          <div class="settings-field">
+            <label>Color de Fondo</label>
+            <input type="color" id="color-bg" value="#FAF7F2" oninput="previewTheme()"/>
+          </div>
+          <div class="settings-field">
+            <label>Color de Encabezado</label>
+            <input type="color" id="color-header" value="#1A1612" oninput="previewTheme()"/>
+          </div>
+          <div class="settings-field">
+            <label>Color de Superficie</label>
+            <input type="color" id="color-surface" value="#FFFFFF" oninput="previewTheme()"/>
+          </div>
+        </div>
+        <div style="margin-bottom:4px">
+          <p style="font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);font-weight:500;margin-bottom:6px">Paletas predefinidas</p>
+          <div class="theme-presets" id="theme-presets"></div>
+        </div>
+        <p style="font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);font-weight:500;margin-bottom:8px;margin-top:16px">Tipografía</p>
+        <div class="settings-grid">
+          <div class="settings-field">
+            <label>Fuente de Títulos</label>
+            <select id="setting-font-display" onchange="previewFonts()">
+              <option value="Cormorant Garamond">Cormorant Garamond (elegante)</option>
+              <option value="Playfair Display">Playfair Display (clásico)</option>
+              <option value="Great Vibes">Great Vibes (caligráfico)</option>
+              <option value="Lora">Lora (serif moderno)</option>
+              <option value="Cinzel">Cinzel (romano)</option>
+            </select>
+          </div>
+          <div class="settings-field">
+            <label>Fuente de Texto</label>
+            <select id="setting-font-body" onchange="previewFonts()">
+              <option value="Jost">Jost (minimalista)</option>
+              <option value="Inter">Inter (neutro)</option>
+              <option value="Raleway">Raleway (geométrico)</option>
+              <option value="Nunito">Nunito (amigable)</option>
+              <option value="Montserrat">Montserrat (moderno)</option>
+            </select>
+          </div>
+        </div>
+        <div style="margin-top:14px">
+          <button class="btn-save-settings" onclick="saveSettings()">Guardar Todos los Cambios</button>
+        </div>
+      </div>
+
+      <!-- ── GUEST LIST ── -->
+      <div class="admin-panel-box" style="margin-top:1.5rem">
+        <div class="admin-head">
+          <h3>Lista de Invitados</h3>
+          <button onclick="exportToCSV()" style="font-size:12px;background:white;border:.5px solid #DDD3C5;padding:6px 12px;border-radius:4px;cursor:pointer;display:flex;align-items:center;gap:6px;font-family:var(--font-body);font-weight:500">
+            <i class="ti ti-file-export"></i> Exportar CSV
+          </button>
+        </div>
+        <div class="stats-row">
+          <div class="stat-cell"><div class="stat-num" style="color:var(--accent-dark)" id="stat-total">0</div><div class="stat-lbl">Total Pases</div></div>
+          <div class="stat-cell"><div class="stat-num" style="color:#4A7A28" id="stat-confirmed">0</div><div class="stat-lbl">Pases Confirmados</div></div>
+          <div class="stat-cell"><div class="stat-num" style="color:var(--rose)" id="stat-declined">0</div><div class="stat-lbl">Declinaron</div></div>
+          <div class="stat-cell"><div class="stat-num" style="color:#4F46E5" id="stat-checkedin">0</div><div class="stat-lbl">En Salón</div></div>
+        </div>
+        <div class="admin-list" id="admin-list"></div>
+
+        <!-- Add guest row -->
+        <div class="add-guest-row">
+          <div style="display:flex;flex-direction:column;gap:3px;flex:1;min-width:140px">
+            <label style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px">Nombre completo</label>
+            <input type="text" id="new-guest-name" class="add-input" placeholder="Nombre del invitado" style="width:100%"/>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:3px;width:80px">
+            <label style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px">Pases</label>
+            <input type="number" id="new-guest-passes" class="add-input" min="1" max="20" value="2" style="width:100%;text-align:center"/>
+          </div>
+          <button class="btn-add" onclick="addGuest()" style="height:38px;align-self:flex-end"><i class="ti ti-plus"></i> Agregar</button>
+        </div>
+      </div>
+
+    </div><!-- /admin-section -->
+  </div>
+</div><!-- /app -->
+
+<!-- MODAL: PIN -->
+<div id="admin-passcode-modal" class="modal-overlay">
+  <div class="modal-box">
+    <div style="font-size:36px;color:var(--accent-dark);margin-bottom:8px"><i class="ti ti-lock-square-rounded"></i></div>
+    <h3 style="font-family:var(--font-display);font-size:22px;color:var(--dark);font-weight:600">Acceso de Administrador</h3>
+    <p style="font-size:12px;color:var(--muted);margin-top:4px">Introduce el PIN de 4 dígitos.</p>
+    <div class="pin-input-container">
+      <input type="password" id="pin-1" class="pin-digit" maxlength="1" oninput="stepPINInput(this,1)" onkeydown="checkPINBackspace(event,1)" autocomplete="off">
+      <input type="password" id="pin-2" class="pin-digit" maxlength="1" oninput="stepPINInput(this,2)" onkeydown="checkPINBackspace(event,2)" autocomplete="off">
+      <input type="password" id="pin-3" class="pin-digit" maxlength="1" oninput="stepPINInput(this,3)" onkeydown="checkPINBackspace(event,3)" autocomplete="off">
+      <input type="password" id="pin-4" class="pin-digit" maxlength="1" oninput="stepPINInput(this,4)" onkeydown="checkPINBackspace(event,4)" autocomplete="off">
+    </div>
+    <div class="modal-btn-row">
+      <button class="btn-modal-cancel" onclick="closeAdminModal()">Cancelar</button>
+      <button class="btn-modal-ok" onclick="verifyAdminPIN()">Verificar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Edit Guest -->
+<div id="edit-guest-modal" class="modal-overlay">
+  <div class="modal-box">
+    <div style="font-size:36px;color:var(--accent-dark);margin-bottom:8px"><i class="ti ti-user-edit"></i></div>
+    <h3 style="font-family:var(--font-display);font-size:22px;color:var(--dark);font-weight:600">Editar Invitado</h3>
+    <div class="edit-form">
+      <div class="edit-field">
+        <label>Nombre completo</label>
+        <input type="text" id="edit-guest-name" placeholder="Nombre del invitado"/>
+      </div>
+      <div class="edit-field">
+        <label>Pases permitidos</label>
+        <input type="number" id="edit-guest-passes" min="1" max="20" value="2"/>
+      </div>
+    </div>
+    <div class="modal-btn-row">
+      <button class="btn-modal-cancel" onclick="closeEditModal()">Cancelar</button>
+      <button class="btn-modal-ok" onclick="saveEditedGuest()">Guardar Cambios</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Scan Result -->
+<div id="scan-result-modal" class="modal-overlay">
+  <div class="modal-box" style="max-width:360px">
+    <div style="font-size:36px;color:#4F46E5;margin-bottom:8px"><i class="ti ti-id-badge-2"></i></div>
+    <h3 style="font-family:var(--font-display);font-size:22px;color:var(--dark);font-weight:600;margin-bottom:4px">Entrada Encontrada</h3>
+    <div style="border-top:.5px solid #EDE5D8;border-bottom:.5px solid #EDE5D8;padding:12px 0;margin:12px 0;text-align:left">
+      <p style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--muted)">Invitado</p>
+      <p id="scan-guest-name" style="font-size:16px;font-weight:600;color:var(--dark);margin-bottom:8px">—</p>
+      <p style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--muted)">Pases</p>
+      <p id="scan-guest-pax" style="font-size:14px;font-weight:500;color:var(--dark);margin-bottom:8px">—</p>
+      <div id="scan-dietary-row" style="display:none">
+        <p style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--muted)">Notas</p>
+        <p id="scan-guest-dietary" style="font-size:13px;font-style:italic;color:#92400E;margin-bottom:8px">—</p>
+      </div>
+      <div id="scan-guest-badge" style="padding:10px;border-radius:4px;text-align:center;font-weight:700;font-size:12px;margin-top:8px;display:flex;align-items:center;justify-content:center;gap:6px"></div>
+    </div>
+    <div class="modal-btn-row">
+      <button class="btn-modal-cancel" onclick="closeScanModal()">Cancelar</button>
+      <button id="scan-action-btn" onclick="executeScanCheckin()" style="padding:8px 20px;font-size:12px;background:#4F46E5;color:white;border:none;border-radius:4px;cursor:pointer;font-family:var(--font-body);font-weight:500">Confirmar Entrada</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Delete confirm -->
+<div id="custom-confirm-modal" class="modal-overlay">
+  <div class="modal-box" style="border-color:#C4958E">
+    <div style="font-size:32px;color:var(--rose);margin-bottom:8px"><i class="ti ti-trash"></i></div>
+    <h3 id="confirm-title" style="font-family:var(--font-display);font-size:20px;color:var(--dark);font-weight:500">¿Eliminar?</h3>
+    <p id="confirm-description" style="font-size:12px;color:var(--muted);margin-top:8px;margin-bottom:20px">Esta acción es irreversible.</p>
+    <div class="modal-btn-row">
+      <button id="confirm-btn-cancel" class="btn-modal-cancel">Cancelar</button>
+      <button id="confirm-btn-action" style="padding:8px 20px;font-size:12px;background:var(--rose);color:white;border:none;border-radius:4px;cursor:pointer;font-family:var(--font-body);min-width:80px">Eliminar</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"><i class="ti ti-circle-check" id="toast-icon"></i><span id="toast-text">OK</span></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script>
+/* ══════════════════════════════════════════════════════════
+   DATA
+══════════════════════════════════════════════════════════ */
+const STORAGE_KEY  = 'event_guests_v5';
+const SETTINGS_KEY = 'event_settings_v5';
+
+const defaultGuests = [
+  {id:'g001',name:'Ana Martínez López',  status:'pending',dietary:'',allowedPasses:2,adults:2,kids:0,pax:2,checkedIn:false},
+  {id:'g002',name:'Carlos Mendoza',       status:'pending',dietary:'',allowedPasses:3,adults:2,kids:1,pax:3,checkedIn:false},
+  {id:'g003',name:'Laura Jiménez',        status:'pending',dietary:'',allowedPasses:2,adults:2,kids:0,pax:2,checkedIn:false},
+  {id:'g004',name:'Roberto García Soto',  status:'pending',dietary:'',allowedPasses:4,adults:2,kids:2,pax:4,checkedIn:false},
+  {id:'g005',name:'Fernanda López',       status:'pending',dietary:'',allowedPasses:2,adults:2,kids:0,pax:2,checkedIn:false},
+  {id:'g006',name:'Miguel Ángel Torres',  status:'pending',dietary:'',allowedPasses:2,adults:2,kids:0,pax:2,checkedIn:false},
+  {id:'g007',name:'Patricia Ruiz',        status:'pending',dietary:'',allowedPasses:2,adults:1,kids:1,pax:2,checkedIn:false},
+  {id:'g008',name:'Javier Hernández',     status:'pending',dietary:'',allowedPasses:3,adults:3,kids:0,pax:3,checkedIn:false},
+  {id:'g009',name:'Diana Castillo',       status:'pending',dietary:'',allowedPasses:2,adults:2,kids:0,pax:2,checkedIn:false},
+  {id:'g010',name:'Eduardo Reyes',        status:'pending',dietary:'',allowedPasses:2,adults:2,kids:0,pax:2,checkedIn:false},
+  {id:'g011',name:'Regina Contreras',     status:'pending',dietary:'',allowedPasses:2,adults:2,kids:0,pax:2,checkedIn:false},
+];
+
+const THEME_PRESETS = [
+  {name:'Dorado clásico',  accent:'#C9A84C',accentDark:'#8B6914',accentLight:'#E8D5A3',bg:'#FAF7F2',header:'#1A1612',surface:'#FFFFFF'},
+  {name:'Rosa romántico',  accent:'#C96E7A',accentDark:'#8B3040',accentLight:'#F2C4CB',bg:'#FDF5F5',header:'#2D1318',surface:'#FFFFFF'},
+  {name:'Verde jardín',    accent:'#5A8A5A',accentDark:'#2D5C2D',accentLight:'#B5D5B5',bg:'#F5FAF5',header:'#1A2E1A',surface:'#FFFFFF'},
+  {name:'Azul zafiro',     accent:'#4A7FA8',accentDark:'#1E4F6B',accentLight:'#B5D5E8',bg:'#F5F9FC',header:'#0D2233',surface:'#FFFFFF'},
+  {name:'Morado elegante', accent:'#7A5A9C',accentDark:'#4A2870',accentLight:'#CDB8E8',bg:'#F8F5FC',header:'#1E0D33',surface:'#FFFFFF'},
+  {name:'Terracota',       accent:'#C27B52',accentDark:'#7A3E18',accentLight:'#E8C8A8',bg:'#FBF6F2',header:'#2A1508',surface:'#FFFFFF'},
+  {name:'Esmeralda',       accent:'#3A8C6E',accentDark:'#1A5C46',accentLight:'#A8D8C8',bg:'#F2FBF7',header:'#0A2B1E',surface:'#FFFFFF'},
+  {name:'Azul marino',     accent:'#344E7A',accentDark:'#1A2E50',accentLight:'#A0B4D8',bg:'#F5F7FC',header:'#0A1428',surface:'#FFFFFF'},
+];
+
+const FONT_PAIRS = {
+  'Cormorant Garamond': 'https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&display=swap',
+  'Playfair Display':   'https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap',
+  'Great Vibes':        'https://fonts.googleapis.com/css2?family=Great+Vibes&display=swap',
+  'Lora':               'https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;1,400&display=swap',
+  'Cinzel':             'https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&display=swap',
+  'Jost':               'https://fonts.googleapis.com/css2?family=Jost:wght@300;400;500;600&display=swap',
+  'Inter':              'https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap',
+  'Raleway':            'https://fonts.googleapis.com/css2?family=Raleway:wght@300;400;500;600&display=swap',
+  'Nunito':             'https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;500;600&display=swap',
+  'Montserrat':         'https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600&display=swap',
+};
+
+const storage = {
+  async get(k){ if(window.storage&&typeof window.storage.get==='function'){try{const r=await window.storage.get(k);return r?r.value:null}catch(e){}}return localStorage.getItem(k) },
+  async set(k,v){ if(window.storage&&typeof window.storage.set==='function'){try{await window.storage.set(k,v);return}catch(e){}}localStorage.setItem(k,v) }
+};
+
+let guests=[], selectedGuest=null, attending=null, isAdminUnlocked=false;
+let html5QrcodeScanner=null, scannedGuestObj=null;
+let editingGuestId = null;
+let qrCodeInstance = null;
+let settings = {
+  eventType:'boda', eventName:'', person1:'', person2:'', eventDate:'', eventTime:'',
+  adminPin:'1402', passType:'adultokid',
+  theme:THEME_PRESETS[0], fontDisplay:'Cormorant Garamond', fontBody:'Jost'
+};
+
+/* ══════════════════════════════════════════════════════════
+   INIT
+══════════════════════════════════════════════════════════ */
+async function loadData(){
+  try{ const g=await storage.get(STORAGE_KEY); guests=g?JSON.parse(g):JSON.parse(JSON.stringify(defaultGuests)); guests=guests.map(g=>({checkedIn:false,...g,allowedPasses:g.allowedPasses||g.pax||2})); }
+  catch(e){ guests=JSON.parse(JSON.stringify(defaultGuests)); }
+
+  try{ const s=await storage.get(SETTINGS_KEY); if(s){ const l=JSON.parse(s); settings={...settings,...l}; if(!settings.theme) settings.theme=THEME_PRESETS[0]; } }
+  catch(e){}
+
+  applySettings();
+  renderAdminList();
+  updateAdminStats();
+  renderThemePresets();
+  initSparkles();
+}
+
+async function saveData(){ try{await storage.set(STORAGE_KEY,JSON.stringify(guests))}catch(e){} }
+async function saveSettingsData(){ try{await storage.set(SETTINGS_KEY,JSON.stringify(settings))}catch(e){} }
+
+/* ══════════════════════════════════════════════════════════
+   APPLY SETTINGS
+══════════════════════════════════════════════════════════ */
+function applySettings(){
+  const t=settings.theme||THEME_PRESETS[0];
+  applyThemeColors(t);
+
+  // Fonts
+  loadFont(settings.fontDisplay);
+  loadFont(settings.fontBody);
+  document.documentElement.style.setProperty('--font-display',"'"+settings.fontDisplay+"',serif");
+  document.documentElement.style.setProperty('--font-body',"'"+settings.fontBody+"',sans-serif");
+
+  // Header title based on event type
+  const p1 = settings.person1||'';
+  const p2 = settings.person2||'';
+  let titleHTML = '';
+  if(p1 && p2) titleHTML = `<em>${p1}</em> &amp; <em>${p2}</em>`;
+  else if(p1)  titleHTML = `<em>${p1}</em>`;
+  else          titleHTML = `<em>${getEventTypeName(settings.eventType||'otro')}</em>`;
+  document.getElementById('header-title').innerHTML = titleHTML;
+
+  const evName = settings.eventName || getEventTypeName(settings.eventType);
+  document.getElementById('header-subtitle').textContent = evName ? `Confirmación · ${evName}` : 'Confirmación de asistencia';
+  let dateStr = settings.eventDate||'';
+  if(settings.eventTime) dateStr += (dateStr?' · ':'')+settings.eventTime;
+  document.getElementById('header-date').textContent = dateStr || 'Fecha por definir';
+  document.getElementById('qr-event-label').textContent = evName+' · '+(settings.eventDate||'');
+  document.title = evName ? `${evName} — Confirmación` : 'Evento — Confirmación';
+
+  // Admin fields
+  document.getElementById('setting-event-type').value = settings.eventType||'boda';
+  document.getElementById('event-name-input').value   = settings.eventName||'';
+  document.getElementById('setting-person1').value    = settings.person1||'';
+  document.getElementById('setting-person2').value    = settings.person2||'';
+  document.getElementById('event-date-input').value   = settings.eventDate||'';
+  document.getElementById('event-time-input').value   = settings.eventTime||'';
+  document.getElementById('admin-pin-input').value    = settings.adminPin||'1402';
+  document.getElementById('setting-pass-type').value  = settings.passType||'adultokid';
+  document.getElementById('setting-font-display').value = settings.fontDisplay||'Cormorant Garamond';
+  document.getElementById('setting-font-body').value    = settings.fontBody||'Jost';
+
+  // Color pickers
+  document.getElementById('color-accent').value  = t.accent||'#C9A84C';
+  document.getElementById('color-bg').value      = t.bg||'#FAF7F2';
+  document.getElementById('color-header').value  = t.header||'#1A1612';
+  document.getElementById('color-surface').value = t.surface||'#FFFFFF';
+
+  updateEventTypeUI();
+  updatePassTypeUI();
+}
+
+function getEventTypeName(type){
+  const m={boda:'Boda',xv:'XV Años',cumpleanos:'Cumpleaños',bautizo:'Bautizo',graduacion:'Graduación',corporativo:'Evento Corporativo',otro:'Evento'};
+  return m[type]||'Evento';
+}
+
+function updateEventTypeUI(){
+  const type = document.getElementById('setting-event-type').value;
+  const lbl  = document.getElementById('label-person1');
+  const fp2  = document.getElementById('field-person2');
+  if(type==='boda'){ lbl.textContent='Nombre Novio/a 1'; fp2.style.display='flex'; }
+  else if(type==='xv'||type==='cumpleanos'){ lbl.textContent='Nombre del/la Festejado/a'; fp2.style.display='none'; }
+  else if(type==='bautizo'){ lbl.textContent='Nombre del/la Bebé'; fp2.style.display='none'; }
+  else if(type==='graduacion'){ lbl.textContent='Nombre del/la Graduado/a'; fp2.style.display='none'; }
+  else if(type==='corporativo'){ lbl.textContent='Nombre del Evento/Empresa'; fp2.style.display='none'; }
+  else { lbl.textContent='Nombre del Festejado 1'; fp2.style.display='flex'; }
+}
+
+function updatePassTypeUI(){
+  const type = (settings.passType || document.getElementById('setting-pass-type').value);
+  document.getElementById('adult-kid-fields').style.display   = type==='adultokid' ? 'block':'none';
+  document.getElementById('general-passes-field').style.display = type==='general'  ? 'block':'none';
+}
+
+function loadFont(name){
+  if(!name || FONT_PAIRS[name]===undefined) return;
+  const existing = document.querySelector(`link[data-font="${name}"]`);
+  if(existing) return;
+  const link = document.createElement('link');
+  link.rel='stylesheet'; link.href=FONT_PAIRS[name]; link.setAttribute('data-font',name);
+  document.head.appendChild(link);
+}
+
+function previewFonts(){
+  const fd = document.getElementById('setting-font-display').value;
+  const fb = document.getElementById('setting-font-body').value;
+  loadFont(fd); loadFont(fb);
+  document.documentElement.style.setProperty('--font-display',"'"+fd+"',serif");
+  document.documentElement.style.setProperty('--font-body',"'"+fb+"',sans-serif");
+}
+
+function applyThemeColors(t){
+  const r=document.documentElement;
+  r.style.setProperty('--accent',t.accent);
+  r.style.setProperty('--accent-dark',t.accentDark||darken(t.accent));
+  r.style.setProperty('--accent-light',t.accentLight||lighten(t.accent));
+  r.style.setProperty('--bg',t.bg);
+  r.style.setProperty('--header-bg',t.header);
+  r.style.setProperty('--surface',t.surface);
+  r.style.setProperty('--dark', t.header);
+}
+
+function previewTheme(){
+  const accent=document.getElementById('color-accent').value;
+  const bg    =document.getElementById('color-bg').value;
+  const header=document.getElementById('color-header').value;
+  const surface=document.getElementById('color-surface').value;
+  applyThemeColors({accent,accentDark:darken(accent),accentLight:lighten(accent),bg,header,surface});
+}
+
+function darken(hex){ hex=hex.replace('#',''); return '#'+[0,2,4].map(i=>Math.max(0,parseInt(hex.slice(i,i+2),16)-60).toString(16).padStart(2,'0')).join(''); }
+function lighten(hex){ hex=hex.replace('#',''); return '#'+[0,2,4].map(i=>Math.min(255,parseInt(hex.slice(i,i+2),16)+80).toString(16).padStart(2,'0')).join(''); }
+
+function renderThemePresets(){
+  const c=document.getElementById('theme-presets');
+  c.innerHTML=THEME_PRESETS.map((t,i)=>`<div class="theme-swatch${settings.theme&&settings.theme.accent===t.accent?' active':''}" title="${t.name}" style="background:${t.accent}" onclick="applyPreset(${i})"></div>`).join('');
+}
+
+function applyPreset(i){
+  settings.theme=THEME_PRESETS[i];
+  applyThemeColors(settings.theme);
+  document.getElementById('color-accent').value =settings.theme.accent;
+  document.getElementById('color-bg').value     =settings.theme.bg;
+  document.getElementById('color-header').value =settings.theme.header;
+  document.getElementById('color-surface').value=settings.theme.surface;
+  renderThemePresets();
+  showToast('Paleta "'+THEME_PRESETS[i].name+'" aplicada','ti-palette');
+}
+
+function saveSettings(){
+  settings.eventType  = document.getElementById('setting-event-type').value;
+  settings.eventName  = document.getElementById('event-name-input').value.trim();
+  settings.person1    = document.getElementById('setting-person1').value.trim();
+  settings.person2    = document.getElementById('setting-person2').value.trim();
+  settings.eventDate  = document.getElementById('event-date-input').value.trim();
+  settings.eventTime  = document.getElementById('event-time-input').value.trim();
+  settings.passType   = document.getElementById('setting-pass-type').value;
+  settings.fontDisplay= document.getElementById('setting-font-display').value;
+  settings.fontBody   = document.getElementById('setting-font-body').value;
+
+  const pin=document.getElementById('admin-pin-input').value.trim();
+  if(pin.length===4&&/^\d+$/.test(pin)) settings.adminPin=pin;
+  else{ showToast('El PIN debe ser exactamente 4 números','ti-alert-circle'); return; }
+
+  const accent =document.getElementById('color-accent').value;
+  const bg     =document.getElementById('color-bg').value;
+  const header =document.getElementById('color-header').value;
+  const surface=document.getElementById('color-surface').value;
+  settings.theme={accent,accentDark:darken(accent),accentLight:lighten(accent),bg,header,surface};
+
+  saveSettingsData();
+  applySettings();
+  renderThemePresets();
+  showToast('Configuración guardada','ti-circle-check');
+}
+
+/* ══════════════════════════════════════════════════════════
+   SCREENS & SEARCH
+══════════════════════════════════════════════════════════ */
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById('screen-'+id).classList.add('active');
+  if(id==='search'){ document.getElementById('search-input').value=''; document.getElementById('results-list').style.display='none'; attending=null; }
+}
+
+document.getElementById('search-input').addEventListener('input',()=>{
+  const q=document.getElementById('search-input').value.toLowerCase().trim();
+  const list=document.getElementById('results-list');
+  if(q.length<3){ list.style.display='none'; return; }
+  const matches=guests.filter(g=>g.name.toLowerCase().includes(q)&&g.status==='pending');
+  if(!matches.length){ list.style.display='block'; list.innerHTML='<div class="no-results">No se encontró ningún invitado pendiente</div>'; return; }
+  list.style.display='block';
+  list.innerHTML=matches.map(g=>`<li onclick="selectGuest('${g.id}')"><span class="guest-name">${g.name}</span><i class="ti ti-chevron-right" style="color:var(--accent);font-size:16px"></i></li>`).join('');
+});
+
+function selectGuest(id){
+  selectedGuest=guests.find(g=>g.id===id);
+  if(!selectedGuest) return;
+  document.getElementById('cf-name').textContent=selectedGuest.name;
+  document.getElementById('btn-yes').classList.remove('selected');
+  document.getElementById('btn-no').classList.remove('selected');
+  document.getElementById('yes-fields').style.display='none';
+  document.getElementById('btn-submit').style.display='none';
+  document.getElementById('dietary').value=selectedGuest.dietary||'';
+  document.getElementById('pases-badge').classList.add('hidden');
+  attending=null;
+
+  const limit=selectedGuest.allowedPasses||2;
+  const aS=document.getElementById('adults-count');
+  const kS=document.getElementById('kids-count');
+  const gS=document.getElementById('general-count');
+  aS.innerHTML=''; kS.innerHTML=''; gS.innerHTML='';
+  for(let i=1;i<=limit;i++) aS.innerHTML+=`<option value="${i}">${i} adulto${i>1?'s':''}</option>`;
+  for(let i=0;i<=limit;i++) kS.innerHTML+=`<option value="${i}" ${i===0?'selected':''}>${i===0?'Sin niños':`${i} niño${i>1?'s':''}`}</option>`;
+  for(let i=1;i<=limit;i++) gS.innerHTML+=`<option value="${i}">${i} persona${i>1?'s':''}</option>`;
+  aS.value=Math.min(limit,2);
+
+  showScreen('confirm');
+}
+
+function selectAttending(val){
+  attending=val;
+  document.getElementById('btn-yes').classList.toggle('selected',val);
+  document.getElementById('btn-no').classList.toggle('selected',!val);
+  document.getElementById('yes-fields').style.display=val?'block':'none';
+  document.getElementById('pases-badge').classList.toggle('hidden',!val);
+  document.getElementById('pases-limite').textContent=selectedGuest?selectedGuest.allowedPasses:0;
+  document.getElementById('btn-submit').style.display='block';
+  updatePassTypeUI();
+}
+
+function validatePassLimit(){
+  const limit=selectedGuest?selectedGuest.allowedPasses:2;
+  const adults=parseInt(document.getElementById('adults-count').value)||1;
+  const kids=parseInt(document.getElementById('kids-count').value)||0;
+  const total=adults+kids;
+  const w=document.getElementById('limit-warning');
+  const s=document.getElementById('btn-submit');
+  if(total>limit){ w.classList.remove('hidden'); s.disabled=true; s.style.opacity='.5'; s.style.pointerEvents='none'; }
+  else{ w.classList.add('hidden'); s.disabled=false; s.style.opacity='1'; s.style.pointerEvents='auto'; }
+}
+
+function validatePassLimitGeneral(){
+  const limit=selectedGuest?selectedGuest.allowedPasses:2;
+  const total=parseInt(document.getElementById('general-count').value)||1;
+  const w=document.getElementById('limit-warning');
+  const s=document.getElementById('btn-submit');
+  if(total>limit){ w.classList.remove('hidden'); s.disabled=true; s.style.opacity='.5'; s.style.pointerEvents='none'; }
+  else{ w.classList.add('hidden'); s.disabled=false; s.style.opacity='1'; s.style.pointerEvents='auto'; }
+}
+
+async function submitConfirmation(){
+  if(!selectedGuest||attending===null) return;
+  const idx=guests.findIndex(g=>g.id===selectedGuest.id);
+  if(attending){
+    const passType=settings.passType||'adultokid';
+    let adults,kids,total;
+    if(passType==='adultokid'){
+      adults=parseInt(document.getElementById('adults-count').value)||1;
+      kids=parseInt(document.getElementById('kids-count').value)||0;
+      total=adults+kids;
+    } else {
+      total=parseInt(document.getElementById('general-count').value)||1;
+      adults=total; kids=0;
+    }
+    if(total>selectedGuest.allowedPasses){ showToast('Excediste el número de pases','ti-alert-circle'); return; }
+    const dietary=document.getElementById('dietary').value.trim();
+    guests[idx]={...guests[idx],status:'confirmed',pax:total,dietary,adults,kids};
+    selectedGuest=guests[idx];
+    await saveData(); updateAdminStats(); renderAdminList();
+    showQR(); showToast('¡Asistencia confirmada!','ti-circle-check');
+  } else {
+    guests[idx]={...guests[idx],status:'declined',pax:0,adults:0,kids:0,dietary:'',checkedIn:false};
+    await saveData(); updateAdminStats(); renderAdminList();
+    showScreen('declined'); showToast('Respuesta registrada','ti-heart-off');
+  }
+}
+
+/* ══════════════════════════════════════════════════════════
+   QR
+══════════════════════════════════════════════════════════ */
+function showQR(){
+  showScreen('qr');
+  document.getElementById('qr-name').textContent=selectedGuest.name;
+  document.getElementById('qr-event-label').textContent=(settings.eventName||getEventTypeName(settings.eventType))+' · '+(settings.eventDate||'');
+  const paxTxt = (settings.passType==='general')
+    ? `${selectedGuest.pax} pase${selectedGuest.pax>1?'s':''}`
+    : `${selectedGuest.adults} adulto${selectedGuest.adults>1?'s':''}${selectedGuest.kids>0?` + ${selectedGuest.kids} niño${selectedGuest.kids>1?'s':''}`:''}`;
+  document.getElementById('qr-pax').textContent=paxTxt;
+  const code=selectedGuest.id.toUpperCase()+'-'+Date.now().toString(36).toUpperCase().slice(-4);
+  document.getElementById('qr-code-text').textContent=code;
+  selectedGuest.qrCode=code;
+
+  // Clear previous QR
+  const qrContainer=document.getElementById('qr-container');
+  qrContainer.innerHTML='';
+
+  // Create QR data
+  const qrData=JSON.stringify({
+    id:selectedGuest.id,
+    name:selectedGuest.name,
+    pax:selectedGuest.pax,
+    code,
+    event:settings.eventName||''
+  });
+
+  // Generate QR code properly
+  setTimeout(()=>{
+    try {
+      qrCodeInstance = new QRCode(qrContainer, {
+        text: qrData,
+        width: 180,
+        height: 180,
+        colorDark: '#1A1612',
+        colorLight: '#FFFFFF',
+        correctLevel: QRCode.CorrectLevel.M
+      });
+    } catch(e) {
+      qrContainer.innerHTML=`<div style="width:180px;height:180px;display:flex;align-items:center;justify-content:center;font-size:11px;color:#8B2020;text-align:center;padding:8px;border:1px solid #C4958E;border-radius:4px">Error al generar QR<br><code style="font-size:12px;margin-top:4px;display:block">${code}</code></div>`;
+    }
+  }, 100);
+}
+
+function downloadQR(){
+  const qrContainer=document.getElementById('qr-container');
+  const qrCanvas=qrContainer.querySelector('canvas');
+  const qrImg=qrContainer.querySelector('img');
+
+  if(!qrCanvas && !qrImg){
+    showToast('QR no disponible aún, espera un momento','ti-alert-circle');
+    return;
+  }
+
+  const off=document.createElement('canvas');
+  off.width=340;
+  off.height=420;
+  const ctx=off.getContext('2d');
+
+  const t=settings.theme||THEME_PRESETS[0];
+
+  // Background
+  ctx.fillStyle=t.bg||'#FAF7F2';
+  ctx.fillRect(0,0,340,420);
+
+  // Border
+  ctx.strokeStyle=t.accent||'#C9A84C';
+  ctx.lineWidth=1;
+  ctx.strokeRect(10,10,320,400);
+
+  // Inner border
+  ctx.strokeStyle=t.accentLight||'#E8D5A3';
+  ctx.lineWidth=2;
+  ctx.strokeRect(14,14,312,392);
+
+  // Event name
+  ctx.fillStyle=t.accentDark||'#8B6914';
+  ctx.font='bold 11px sans-serif';
+  ctx.textAlign='center';
+  ctx.fillText((settings.eventName||getEventTypeName(settings.eventType)).toUpperCase(),170,42);
+
+  // Guest name
+  ctx.fillStyle=t.header||'#1A1612';
+  ctx.font='300 22px Georgia,serif';
+  ctx.fillText(selectedGuest.name,170,78);
+
+  // Date
+  ctx.fillStyle='#6B5E4E';
+  ctx.font='300 13px sans-serif';
+  ctx.fillText(settings.eventDate||'',170,102);
+
+  const finish=()=>{
+    ctx.strokeStyle=t.accentLight||'#E8D5A3';
+    ctx.beginPath();
+    ctx.moveTo(30,318);
+    ctx.lineTo(310,318);
+    ctx.stroke();
+
+    ctx.fillStyle='#6B5E4E';
+    ctx.font='12px sans-serif';
+    ctx.fillText('Pases: '+selectedGuest.pax+' | Código: '+document.getElementById('qr-code-text').textContent,170,342);
+
+    ctx.fillStyle=t.accentDark||'#8B6914';
+    ctx.font='italic 11px Georgia,serif';
+    ctx.fillText('Presentar en recepción del evento',170,372);
+
+    const link=document.createElement('a');
+    link.download='pase-'+selectedGuest.id+'.png';
+    link.href=off.toDataURL('image/png');
+    link.click();
+    showToast('Pase descargado','ti-download');
+  };
+
+  if(qrCanvas){
+    ctx.drawImage(qrCanvas,80,118,180,180);
+    finish();
+  } else if(qrImg){
+    const tmp=new Image();
+    tmp.crossOrigin='anonymous';
+    tmp.onload=()=>{
+      ctx.drawImage(tmp,80,118,180,180);
+      finish();
+    };
+    tmp.onerror=()=>{
+      showToast('Error al cargar QR para descargar','ti-alert-circle');
+    };
+    tmp.src=qrImg.src;
+  }
+}
+
+/* ══════════════════════════════════════════════════════════
+   ADMIN
+══════════════════════════════════════════════════════════ */
+function toggleAdmin(){
+  if(isAdminUnlocked){ const s=document.getElementById('admin-section'); s.style.display=s.style.display==='none'?'block':'none'; }
+  else openAdminModal();
+}
+function openAdminModal(){ ['pin-1','pin-2','pin-3','pin-4'].forEach(id=>document.getElementById(id).value=''); document.getElementById('admin-passcode-modal').classList.add('active'); setTimeout(()=>document.getElementById('pin-1').focus(),300); }
+function closeAdminModal(){ document.getElementById('admin-passcode-modal').classList.remove('active'); }
+function stepPINInput(el,i){ if(el.value.length===1&&i<4) document.getElementById(`pin-${i+1}`).focus(); if(i===4&&el.value.length===1) verifyAdminPIN(); }
+function checkPINBackspace(e,i){ if(e.key==='Backspace'&&!e.target.value&&i>1) document.getElementById(`pin-${i-1}`).focus(); }
+
+function verifyAdminPIN(){
+  const entered=['pin-1','pin-2','pin-3','pin-4'].map(id=>document.getElementById(id).value).join('');
+  if(entered===(settings.adminPin||'1402')){
+    isAdminUnlocked=true; closeAdminModal();
+    document.getElementById('admin-section').style.display='block';
+    document.getElementById('admin-lock-icon').className='ti ti-lock-open';
+    showToast('Acceso concedido','ti-lock-open');
+  } else {
+    showToast('PIN incorrecto','ti-alert-triangle');
+    ['pin-1','pin-2','pin-3','pin-4'].forEach(id=>document.getElementById(id).value='');
+    document.getElementById('pin-1').focus();
+  }
+}
+
+function logoutAdmin(){ toggleQRReader(false); isAdminUnlocked=false; document.getElementById('admin-section').style.display='none'; document.getElementById('admin-lock-icon').className='ti ti-lock'; showToast('Sesión cerrada','ti-lock'); }
+
+function updateAdminStats(){
+  // Total de pases asignados
+  const totalPases = guests.reduce((sum,g)=>sum+(g.allowedPasses||0),0);
+  document.getElementById('stat-total').textContent=totalPases;
+
+  // Pases confirmados (suma de pax de confirmados)
+  const pasesConfirmados = guests.filter(g=>g.status==='confirmed').reduce((sum,g)=>sum+(g.pax||0),0);
+  document.getElementById('stat-confirmed').textContent=pasesConfirmados;
+
+  // Invitados que declinaron (cantidad de personas, no pases)
+  document.getElementById('stat-declined').textContent=guests.filter(g=>g.status==='declined').length;
+
+  // Personas en salón
+  const enSalon = guests.filter(g=>g.checkedIn).reduce((sum,g)=>sum+(g.pax||0),0);
+  document.getElementById('stat-checkedin').textContent=enSalon;
+}
+
+function renderAdminList(){
+  const list=document.getElementById('admin-list');
+  const sorted=[...guests].sort((a,b)=>a.name.localeCompare(b.name));
+  list.innerHTML=sorted.map(g=>{
+    const bc=g.status==='confirmed'?'badge-c':g.status==='declined'?'badge-d':'badge-p';
+    const bl=g.status==='confirmed'?'Confirmado':g.status==='declined'?'Declinó':'Pendiente';
+    const sub=g.status==='confirmed'?`${g.pax}/${g.allowedPasses} pases`:`${g.allowedPasses} pases`;
+    const ciC=g.checkedIn?'color:#4F46E5':'color:#D1D5DB';
+    const ciI=g.checkedIn?'ti-circle-check-filled':'ti-circle';
+    const qrB=g.status==='confirmed'?`<button style="color:var(--accent-dark);background:none;border:none;cursor:pointer;font-size:18px;padding:3px" onclick="viewGuestQRDirectly('${g.id}')" title="Ver Pase"><i class="ti ti-ticket"></i></button>`:'';
+    return `<div class="admin-row">
+      <button style="font-size:20px;background:none;border:none;cursor:pointer;padding:3px;${ciC}" onclick="toggleCheckedIn('${g.id}')" title="Check-In"><i class="ti ${ciI}"></i></button>
+      <div style="flex:1;min-width:0"><span style="display:block;font-size:14px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${g.name}</span><span style="display:block;font-size:12px;color:var(--muted)">${sub}</span></div>
+      <span class="badge ${bc}">${bl}</span>
+      <div style="display:flex;align-items:center;gap:2px">
+        <button class="btn-edit" onclick="openEditModal('${g.id}')" title="Editar"><i class="ti ti-edit"></i></button>
+        ${qrB}
+        <button style="color:#C4958E;background:none;border:none;cursor:pointer;font-size:18px;padding:3px" onclick="promptRemoveGuest('${g.id}')" title="Eliminar"><i class="ti ti-trash"></i></button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+/* ══════════════════════════════════════════════════════════
+   EDIT GUEST
+══════════════════════════════════════════════════════════ */
+function openEditModal(guestId){
+  const guest = guests.find(g=>g.id===guestId);
+  if(!guest) return;
+  editingGuestId = guestId;
+
+  document.getElementById('edit-guest-name').value = guest.name || '';
+  document.getElementById('edit-guest-passes').value = guest.allowedPasses || 2;
+
+  document.getElementById('edit-guest-modal').classList.add('active');
+}
+
+function closeEditModal(){
+  document.getElementById('edit-guest-modal').classList.remove('active');
+  editingGuestId = null;
+}
+
+async function saveEditedGuest(){
+  if(!editingGuestId) return;
+
+  const idx = guests.findIndex(g=>g.id===editingGuestId);
+  if(idx === -1) return;
+
+  const newName = document.getElementById('edit-guest-name').value.trim();
+  const newPasses = parseInt(document.getElementById('edit-guest-passes').value)||2;
+
+  if(!newName){
+    showToast('El nombre no puede estar vacío','ti-alert-circle');
+    return;
+  }
+
+  guests[idx].name = newName;
+  guests[idx].allowedPasses = newPasses;
+
+  // Si estaba confirmado y los pases cambiaron, verificar que no excedan
+  if(guests[idx].status === 'confirmed' && guests[idx].pax > newPasses){
+    guests[idx].pax = newPasses;
+    guests[idx].adults = newPasses;
+    guests[idx].kids = 0;
+  }
+
+  await saveData();
+  updateAdminStats();
+  renderAdminList();
+  closeEditModal();
+  showToast('Invitado actualizado','ti-circle-check');
+}
+
+async function toggleCheckedIn(id){
+  const idx=guests.findIndex(g=>g.id===id);
+  if(idx===-1) return;
+  if(guests[idx].status!=='confirmed'){ showToast('Solo invitados confirmados pueden hacer check-in','ti-alert-circle'); return; }
+  guests[idx].checkedIn=!guests[idx].checkedIn;
+  await saveData(); updateAdminStats(); renderAdminList();
+  showToast(guests[idx].checkedIn?'Ingreso registrado':'Ingreso anulado',guests[idx].checkedIn?'ti-circle-check-filled':'ti-circle-dot');
+}
+
+function viewGuestQRDirectly(id){ selectedGuest=guests.find(g=>g.id===id); if(selectedGuest){ showQR(); showToast('Mostrando pase','ti-ticket'); } }
+
+function promptRemoveGuest(id){
+  const overlay=document.getElementById('custom-confirm-modal');
+  const target=guests.find(g=>g.id===id); if(!target) return;
+  document.getElementById('confirm-title').textContent='¿Eliminar Invitado?';
+  document.getElementById('confirm-description').textContent=`¿Eliminar a "${target.name}"? Irreversible.`;
+  overlay.classList.add('active');
+  document.getElementById('confirm-btn-cancel').onclick=()=>overlay.classList.remove('active');
+  document.getElementById('confirm-btn-action').onclick=async()=>{ overlay.classList.remove('active'); guests=guests.filter(g=>g.id!==id); await saveData(); updateAdminStats(); renderAdminList(); showToast('Invitado eliminado','ti-trash'); };
+}
+
+async function addGuest(){
+  const name=document.getElementById('new-guest-name').value.trim();
+  const passes=parseInt(document.getElementById('new-guest-passes').value)||2;
+  if(!name){ showToast('Ingresa el nombre del invitado','ti-alert-circle'); return; }
+  const id='g'+Date.now().toString(36);
+  guests.push({id,name,status:'pending',dietary:'',allowedPasses:passes,pax:passes,adults:passes,kids:0,checkedIn:false});
+  await saveData(); updateAdminStats(); renderAdminList();
+  document.getElementById('new-guest-name').value='';
+  document.getElementById('new-guest-passes').value='2';
+  showToast('Invitado agregado','ti-user-plus');
+}
+
+/* ══════════════════════════════════════════════════════════
+   QR SCANNER
+══════════════════════════════════════════════════════════ */
+function toggleQRReader(force=null){
+  const c=document.getElementById('qr-scanner-container');
+  const vis=force!==null?!force:c.style.display==='block';
+  if(vis){ c.style.display='none'; if(html5QrcodeScanner){ html5QrcodeScanner.stop().then(()=>html5QrcodeScanner=null).catch(()=>{}); } }
+  else{ c.style.display='block'; startQRScanner(); }
+}
+
+function startQRScanner(){
+  if(html5QrcodeScanner) html5QrcodeScanner.clear();
+  html5QrcodeScanner=new Html5Qrcode('reader');
+  html5QrcodeScanner.start({facingMode:'environment'},{fps:10,qrbox:{width:250,height:250}},onScanSuccess,()=>{})
+    .catch(()=>{ showToast('No se pudo iniciar la cámara','ti-alert-circle'); document.getElementById('qr-scanner-container').style.display='none'; });
+}
+
+function onScanSuccess(txt){
+  if(html5QrcodeScanner) html5QrcodeScanner.pause(true);
+  try{ const d=JSON.parse(txt); if(d&&d.id){ openScanResultModal(d); return; } }catch(e){}
+  const m=guests.find(g=>g.id.toUpperCase()===txt.trim().toUpperCase());
+  if(m) openScanResultModal({id:m.id});
+  else{ showToast('Código no válido','ti-alert-triangle'); setTimeout(()=>{ if(html5QrcodeScanner) html5QrcodeScanner.resume(); },2000); }
+}
+
+function openScanResultModal(qrData){
+  const g=guests.find(x=>x.id===qrData.id);
+  if(!g){ showToast('Invitado no encontrado','ti-user-x'); setTimeout(()=>{ if(html5QrcodeScanner) html5QrcodeScanner.resume(); },2000); return; }
+  scannedGuestObj=g;
+  document.getElementById('scan-guest-name').textContent=g.name;
+  document.getElementById('scan-guest-pax').textContent=g.status==='confirmed'?`${g.pax} pases confirmados`:`Sin confirmar (${g.allowedPasses} asignados)`;
+  if(g.dietary){ document.getElementById('scan-dietary-row').style.display='block'; document.getElementById('scan-guest-dietary').textContent=g.dietary; }
+  else document.getElementById('scan-dietary-row').style.display='none';
+  const badge=document.getElementById('scan-guest-badge');
+  const btn=document.getElementById('scan-action-btn');
+  if(g.status!=='confirmed'){ badge.style.cssText='padding:10px;border-radius:4px;font-weight:700;font-size:12px;margin-top:8px;background:#FEE2E2;color:#991B1B;display:flex;align-items:center;justify-content:center;gap:6px'; badge.innerHTML='<i class="ti ti-alert-triangle"></i> No ha confirmado asistencia'; btn.style.display='none'; }
+  else if(g.checkedIn){ badge.style.cssText='padding:10px;border-radius:4px;font-weight:700;font-size:12px;margin-top:8px;background:#FEF3C7;color:#92400E;display:flex;align-items:center;justify-content:center;gap:6px'; badge.innerHTML='<i class="ti ti-alert-circle"></i>¡Entrada ya registrada!'; btn.style.display='block'; btn.textContent='Volver a Registrar'; }
+  else{ badge.style.cssText='padding:10px;border-radius:4px;font-weight:700;font-size:12px;margin-top:8px;background:#DCFCE7;color:#166534;display:flex;align-items:center;justify-content:center;gap:6px'; badge.innerHTML='<i class="ti ti-circle-check"></i> Entrada válida'; btn.style.display='block'; btn.textContent='Confirmar Entrada'; }
+  document.getElementById('scan-result-modal').classList.add('active');
+}
+
+function closeScanModal(){ document.getElementById('scan-result-modal').classList.remove('active'); scannedGuestObj=null; setTimeout(()=>{ if(html5QrcodeScanner) html5QrcodeScanner.resume(); },1000); }
+
+async function executeScanCheckin(){
+  if(!scannedGuestObj) return;
+  const idx=guests.findIndex(g=>g.id===scannedGuestObj.id);
+  if(idx!==-1){ guests[idx].checkedIn=true; await saveData(); updateAdminStats(); renderAdminList(); showToast(`Entrada: ${scannedGuestObj.name}`,'ti-circle-check-filled'); }
+  document.getElementById('scan-result-modal').classList.remove('active');
+  scannedGuestObj=null;
+  setTimeout(()=>{ if(html5QrcodeScanner) html5QrcodeScanner.resume(); },1000);
+}
+
+/* ══════════════════════════════════════════════════════════
+   EXPORT
+══════════════════════════════════════════════════════════ */
+function exportToCSV(){
+  if(!guests.length) return;
+  const h=['ID','Nombre','Adultos','Niños','Pases Confirmados','Pases Asignados','Estado','Check-In','Restricciones'];
+  const rows=guests.map(g=>[g.id,g.name,g.adults||0,g.kids||0,g.pax||0,g.allowedPasses||2,g.status,g.checkedIn?'SI':'NO',g.dietary||'']);
+  const csv='data:text/csv;charset=utf-8,\uFEFF'+[h.join(','),...rows.map(r=>r.map(v=>`"${v}"`).join(','))].join('\n');
+  const a=document.createElement('a'); a.href=encodeURI(csv); a.download='invitados_evento.csv'; document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  showToast('Lista exportada','ti-file-spreadsheet');
+}
+
+/* ══════════════════════════════════════════════════════════
+   TOAST & SPARKLES
+══════════════════════════════════════════════════════════ */
+function showToast(text,icon='ti-circle-check'){
+  document.getElementById('toast-text').textContent=text;
+  document.getElementById('toast-icon').className='ti '+icon;
+  const t=document.getElementById('toast'); t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),3500);
+}
+
+function hexToRgb(hex){ hex=hex.replace('#',''); if(hex.length===3) hex=hex.split('').map(c=>c+c).join(''); return [parseInt(hex.slice(0,2),16),parseInt(hex.slice(2,4),16),parseInt(hex.slice(4,6),16)].join(','); }
+
+function initSparkles(){
+  const canvas=document.getElementById('sparkle-canvas');
+  const ctx=canvas.getContext('2d');
+  function resize(){ canvas.width=window.innerWidth; canvas.height=window.innerHeight; }
+  window.addEventListener('resize',resize); resize();
+  class Sparkle{
+    constructor(){ this.reset(); }
+    reset(){ this.x=Math.random()*canvas.width; this.y=canvas.height+10; this.size=Math.random()*2+.5; this.speedX=Math.random()*.4-.2; this.speedY=Math.random()*.4+.2; this.opacity=Math.random()*.5+.1; this.fade=Math.random()*.01+.002; }
+    update(){ this.x+=this.speedX; this.y-=this.speedY; this.opacity-=this.fade; if(this.opacity<=0||this.y<0) this.reset(); }
+    draw(){
+      const acc=getComputedStyle(document.documentElement).getPropertyValue('--accent').trim()||'#C9A84C';
+      ctx.beginPath(); ctx.arc(this.x,this.y,this.size,0,Math.PI*2);
+      try{ ctx.fillStyle=`rgba(${hexToRgb(acc)},${this.opacity})`; }catch(e){ ctx.fillStyle=`rgba(201,168,76,${this.opacity})`; }
+      ctx.fill();
+    }
+  }
+  const particles=Array.from({length:35},()=>new Sparkle());
+  (function animate(){ ctx.clearRect(0,0,canvas.width,canvas.height); particles.forEach(p=>{ p.update(); p.draw(); }); requestAnimationFrame(animate); })();
+}
+
+// Event type selector wires up live
+document.getElementById('setting-event-type').addEventListener('change', updateEventTypeUI);
+
+loadData();
+</script>
+</body>
+</html>
