@@ -11,6 +11,40 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
 
+  <!-- Firebase: guarda las respuestas en la nube (Firestore) para que se
+       sincronicen entre todos los dispositivos, en vez de quedarse aisladas
+       en el navegador de cada invitado (localStorage). -->
+  <script>
+    // Promesa que el resto de la app espera antes de leer/guardar datos,
+    // ya que los scripts type="module" cargan después que los scripts normales.
+    window.__fbReady = new Promise(resolve => { window.__fbReadyResolve = resolve; });
+  </script>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js";
+    import {
+      getFirestore, collection, doc, getDoc, getDocs, setDoc, deleteDoc, onSnapshot
+    } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyCMsFXttEts3wo02FdnPI9jHVROagtokRo",
+      authDomain: "mis-xv-ximena-1d8fb.firebaseapp.com",
+      projectId: "mis-xv-ximena-1d8fb",
+      storageBucket: "mis-xv-ximena-1d8fb.firebasestorage.app",
+      messagingSenderId: "884315922843",
+      appId: "1:884315922843:web:4c65568604d8eb8859013e"
+    };
+
+    try {
+      const app = initializeApp(firebaseConfig);
+      const db = getFirestore(app);
+      window.__fb = { db, collection, doc, getDoc, getDocs, setDoc, deleteDoc, onSnapshot };
+    } catch (e) {
+      console.error('No se pudo inicializar Firebase, se usará almacenamiento local del navegador.', e);
+      window.__fb = null;
+    }
+    window.__fbReadyResolve();
+  </script>
+
   <style>
     :root {
       --accent:#C9A84C; --accent-dark:#8B6914; --accent-light:#E8D5A3;
@@ -524,6 +558,13 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script>
+  // Si el CDN principal falla en cargar (redes restrictivas, ad-blockers, etc.)
+  // intentamos con un CDN alterno para que el generador de QR no se quede roto.
+  if (typeof QRCode === 'undefined') {
+    document.write('<script src="https://unpkg.com/qrcodejs@1.0.0/qrcode.min.js"><\/script>');
+  }
+</script>
+<script>
 /* ══════════════════════════════════════════════════════════
    DATA
 ══════════════════════════════════════════════════════════ */
@@ -630,6 +671,20 @@ const storage = {
   async set(k,v){ if(window.storage&&typeof window.storage.set==='function'){try{await window.storage.set(k,v);return}catch(e){}}localStorage.setItem(k,v) }
 };
 
+// ── Firestore (nube) ──
+// Cada invitado es su propio documento, así una confirmación de un invitado
+// nunca pisa la de otro aunque lleguen al mismo tiempo desde celulares
+// distintos. Settings vive en un solo documento (lo edita solo el anfitrión).
+const FB_GUESTS_COLLECTION = 'guests';
+const FB_CONFIG_COLLECTION = 'config';
+const FB_SETTINGS_DOC_ID   = 'settings';
+let fbUnsub = null;
+
+async function fbReady(){
+  await window.__fbReady;
+  return !!(window.__fb && window.__fb.db);
+}
+
 let guests=[], selectedGuest=null, attending=null, isAdminUnlocked=false;
 let html5QrcodeScanner=null, scannedGuestObj=null;
 let editingGuestId = null;
@@ -644,11 +699,13 @@ let settings = {
    INIT
 ══════════════════════════════════════════════════════════ */
 async function loadData(){
-  try{ const g=await storage.get(STORAGE_KEY); guests=g?JSON.parse(g):JSON.parse(JSON.stringify(defaultGuests)); guests=guests.map(g=>({checkedIn:false,...g,allowedPasses:g.allowedPasses||g.pax||2})); }
-  catch(e){ guests=JSON.parse(JSON.stringify(defaultGuests)); }
-
-  try{ const s=await storage.get(SETTINGS_KEY); if(s){ const l=JSON.parse(s); settings={...settings,...l}; if(!settings.theme) settings.theme=THEME_PRESETS[0]; } }
-  catch(e){}
+  const useFb = await fbReady();
+  if(useFb){
+    try{ await loadDataFirebase(); }
+    catch(e){ console.error('Firebase no disponible, usando almacenamiento local del navegador.', e); await loadDataLocal(); }
+  } else {
+    await loadDataLocal();
+  }
 
   applySettings();
   renderAdminList();
@@ -657,8 +714,80 @@ async function loadData(){
   initSparkles();
 }
 
-async function saveData(){ try{await storage.set(STORAGE_KEY,JSON.stringify(guests))}catch(e){} }
-async function saveSettingsData(){ try{await storage.set(SETTINGS_KEY,JSON.stringify(settings))}catch(e){} }
+async function loadDataLocal(){
+  try{ const g=await storage.get(STORAGE_KEY); guests=g?JSON.parse(g):JSON.parse(JSON.stringify(defaultGuests)); guests=guests.map(g=>({checkedIn:false,...g,allowedPasses:g.allowedPasses||g.pax||2})); }
+  catch(e){ guests=JSON.parse(JSON.stringify(defaultGuests)); }
+
+  try{ const s=await storage.get(SETTINGS_KEY); if(s){ const l=JSON.parse(s); settings={...settings,...l}; if(!settings.theme) settings.theme=THEME_PRESETS[0]; } }
+  catch(e){}
+}
+
+function loadDataFirebase(){
+  return new Promise(async (resolve,reject)=>{
+    try{
+      const { db, collection, getDocs, doc, getDoc, setDoc, onSnapshot } = window.__fb;
+
+      // Solo sembramos los invitados por defecto la primera vez (colección vacía).
+      const snap = await getDocs(collection(db, FB_GUESTS_COLLECTION));
+      if(snap.empty){
+        const seed = JSON.parse(JSON.stringify(defaultGuests)).map(g=>({checkedIn:false,...g,allowedPasses:g.allowedPasses||g.pax||2}));
+        await Promise.all(seed.map(g=>setDoc(doc(db,FB_GUESTS_COLLECTION,g.id), g)));
+      }
+
+      const sDoc = await getDoc(doc(db,FB_CONFIG_COLLECTION,FB_SETTINGS_DOC_ID));
+      if(sDoc.exists()){ settings = {...settings, ...sDoc.data()}; if(!settings.theme) settings.theme = THEME_PRESETS[0]; }
+
+      // Escucha en tiempo real: si otro dispositivo confirma o tú haces
+      // check-in desde otro celular, este panel se actualiza solo.
+      if(!fbUnsub){
+        let first = true;
+        fbUnsub = onSnapshot(collection(db, FB_GUESTS_COLLECTION), liveSnap=>{
+          guests = liveSnap.docs.map(d=>d.data());
+          updateAdminStats(); renderAdminList();
+          if(first){ first=false; resolve(); }
+        }, err=>{ console.error('Error de sincronización en tiempo real', err); if(first){ first=false; reject(err); } });
+      } else {
+        resolve();
+      }
+    }catch(e){ reject(e); }
+  });
+}
+
+// changedIds: undefined => guarda todos los invitados (uso poco frecuente);
+// string o arreglo de strings => guarda solo esos invitados puntuales.
+async function saveData(changedIds){
+  const useFb = await fbReady();
+  if(useFb){
+    try{
+      const { db, doc, setDoc } = window.__fb;
+      const ids = changedIds===undefined ? guests.map(g=>g.id) : (Array.isArray(changedIds)?changedIds:[changedIds]);
+      await Promise.all(ids.map(id=>{
+        const g = guests.find(x=>x.id===id);
+        return g ? setDoc(doc(db,FB_GUESTS_COLLECTION,id), g) : Promise.resolve();
+      }));
+      return;
+    }catch(e){ console.error('Error guardando en Firebase, se intentará localmente.', e); }
+  }
+  try{ await storage.set(STORAGE_KEY,JSON.stringify(guests)) }catch(e){}
+}
+
+async function deleteGuestRemote(id){
+  const useFb = await fbReady();
+  if(useFb){
+    try{ const { db, doc, deleteDoc } = window.__fb; await deleteDoc(doc(db,FB_GUESTS_COLLECTION,id)); return; }
+    catch(e){ console.error('Error eliminando en Firebase, se intentará localmente.', e); }
+  }
+  try{ await storage.set(STORAGE_KEY,JSON.stringify(guests)) }catch(e){}
+}
+
+async function saveSettingsData(){
+  const useFb = await fbReady();
+  if(useFb){
+    try{ const { db, doc, setDoc } = window.__fb; await setDoc(doc(db,FB_CONFIG_COLLECTION,FB_SETTINGS_DOC_ID), settings); return; }
+    catch(e){ console.error('Error guardando settings en Firebase, se intentará localmente.', e); }
+  }
+  try{ await storage.set(SETTINGS_KEY,JSON.stringify(settings)) }catch(e){}
+}
 
 /* ══════════════════════════════════════════════════════════
    APPLY SETTINGS
@@ -917,11 +1046,11 @@ async function submitConfirmation(){
     const dietary=document.getElementById('dietary').value.trim();
     guests[idx]={...guests[idx],status:'confirmed',pax:total,dietary,adults,kids};
     selectedGuest=guests[idx];
-    await saveData(); updateAdminStats(); renderAdminList();
+    await saveData(selectedGuest.id); updateAdminStats(); renderAdminList();
     showQR(); showToast('¡Asistencia confirmada!','ti-circle-check');
   } else {
     guests[idx]={...guests[idx],status:'declined',pax:0,adults:0,kids:0,dietary:'',checkedIn:false};
-    await saveData(); updateAdminStats(); renderAdminList();
+    await saveData(guests[idx].id); updateAdminStats(); renderAdminList();
     showScreen('declined'); showToast('Respuesta registrada','ti-heart-off');
   }
 }
@@ -945,28 +1074,54 @@ function showQR(){
   const qrContainer=document.getElementById('qr-container');
   qrContainer.innerHTML='';
 
-  // Create QR data
+  // Create QR data — keep it minimal (id + code) so it always fits;
+  // name/pax/event are looked up from the guest list when scanned, not stored in the QR itself.
   const qrData=JSON.stringify({
     id:selectedGuest.id,
-    name:selectedGuest.name,
-    pax:selectedGuest.pax,
-    code,
-    event:settings.eventName||''
+    code
   });
 
-  // Generate QR code properly
+  // Generate QR code. NOTE: typeNumber:0 ("auto") has a known bug in this
+  // qrcodejs build where certain data lengths throw "code length overflow"
+  // depending on which guest's id/code combo is being encoded — that's why
+  // it failed only for *some* guests and not others. Fixed by explicitly
+  // trying each version number ourselves (1..10) until one succeeds, with
+  // multiple error-correction levels as extra headroom, instead of trusting
+  // the library's auto-pick.
   setTimeout(()=>{
-    try {
-      qrCodeInstance = new QRCode(qrContainer, {
-        text: qrData,
-        width: 180,
-        height: 180,
-        colorDark: '#1A1612',
-        colorLight: '#FFFFFF',
-        correctLevel: QRCode.CorrectLevel.M
-      });
-    } catch(e) {
-      qrContainer.innerHTML=`<div style="width:180px;height:180px;display:flex;align-items:center;justify-content:center;font-size:11px;color:#8B2020;text-align:center;padding:8px;border:1px solid #C4958E;border-radius:4px">Error al generar QR<br><code style="font-size:12px;margin-top:4px;display:block">${code}</code></div>`;
+    if (typeof QRCode === 'undefined') {
+      qrContainer.innerHTML = `<div style="width:180px;height:180px;display:flex;align-items:center;justify-content:center;font-size:11px;color:#8B2020;text-align:center;padding:8px;border:1px solid #C4958E;border-radius:4px">No se pudo cargar la librería de QR.<br>Revisa tu conexión y recarga la página.<br><code style="font-size:11px;margin-top:6px;display:block">${code}</code></div>`;
+      return;
+    }
+
+    const levels = [QRCode.CorrectLevel.M, QRCode.CorrectLevel.L, QRCode.CorrectLevel.Q, QRCode.CorrectLevel.H];
+    let success = false;
+
+    outer:
+    for (const correctLevel of levels) {
+      for (let typeNumber = 1; typeNumber <= 10; typeNumber++) {
+        try {
+          qrContainer.innerHTML = '';
+          qrCodeInstance = new QRCode(qrContainer, {
+            text: qrData,
+            width: 180,
+            height: 180,
+            colorDark: '#1A1612',
+            colorLight: '#FFFFFF',
+            typeNumber: typeNumber,
+            correctLevel: correctLevel
+          });
+          success = true;
+          break outer;
+        } catch (e) {
+          // This typeNumber was too small (or hit the library bug) for this
+          // particular data — silently try the next one.
+        }
+      }
+    }
+
+    if (!success) {
+      qrContainer.innerHTML = `<div style="width:180px;height:180px;display:flex;align-items:center;justify-content:center;font-size:11px;color:#8B2020;text-align:center;padding:8px;border:1px solid #C4958E;border-radius:4px">Error al generar QR<br><code style="font-size:12px;margin-top:4px;display:block">${code}</code></div>`;
     }
   }, 100);
 }
@@ -1168,7 +1323,7 @@ async function saveEditedGuest(){
     guests[idx].kids = 0;
   }
 
-  await saveData();
+  await saveData(editingGuestId);
   updateAdminStats();
   renderAdminList();
   closeEditModal();
@@ -1180,7 +1335,7 @@ async function toggleCheckedIn(id){
   if(idx===-1) return;
   if(guests[idx].status!=='confirmed'){ showToast('Solo invitados confirmados pueden hacer check-in','ti-alert-circle'); return; }
   guests[idx].checkedIn=!guests[idx].checkedIn;
-  await saveData(); updateAdminStats(); renderAdminList();
+  await saveData(id); updateAdminStats(); renderAdminList();
   showToast(guests[idx].checkedIn?'Ingreso registrado':'Ingreso anulado',guests[idx].checkedIn?'ti-circle-check-filled':'ti-circle-dot');
 }
 
@@ -1193,7 +1348,7 @@ function promptRemoveGuest(id){
   document.getElementById('confirm-description').textContent=`¿Eliminar a "${target.name}"? Irreversible.`;
   overlay.classList.add('active');
   document.getElementById('confirm-btn-cancel').onclick=()=>overlay.classList.remove('active');
-  document.getElementById('confirm-btn-action').onclick=async()=>{ overlay.classList.remove('active'); guests=guests.filter(g=>g.id!==id); await saveData(); updateAdminStats(); renderAdminList(); showToast('Invitado eliminado','ti-trash'); };
+  document.getElementById('confirm-btn-action').onclick=async()=>{ overlay.classList.remove('active'); guests=guests.filter(g=>g.id!==id); await deleteGuestRemote(id); updateAdminStats(); renderAdminList(); showToast('Invitado eliminado','ti-trash'); };
 }
 
 async function addGuest(){
@@ -1202,7 +1357,7 @@ async function addGuest(){
   if(!name){ showToast('Ingresa el nombre del invitado','ti-alert-circle'); return; }
   const id='g'+Date.now().toString(36);
   guests.push({id,name,status:'pending',dietary:'',allowedPasses:passes,pax:passes,adults:passes,kids:0,checkedIn:false});
-  await saveData(); updateAdminStats(); renderAdminList();
+  await saveData(id); updateAdminStats(); renderAdminList();
   document.getElementById('new-guest-name').value='';
   document.getElementById('new-guest-passes').value='2';
   showToast('Invitado agregado','ti-user-plus');
@@ -1254,7 +1409,7 @@ function closeScanModal(){ document.getElementById('scan-result-modal').classLis
 async function executeScanCheckin(){
   if(!scannedGuestObj) return;
   const idx=guests.findIndex(g=>g.id===scannedGuestObj.id);
-  if(idx!==-1){ guests[idx].checkedIn=true; await saveData(); updateAdminStats(); renderAdminList(); showToast(`Entrada: ${scannedGuestObj.name}`,'ti-circle-check-filled'); }
+  if(idx!==-1){ guests[idx].checkedIn=true; await saveData(scannedGuestObj.id); updateAdminStats(); renderAdminList(); showToast(`Entrada: ${scannedGuestObj.name}`,'ti-circle-check-filled'); }
   document.getElementById('scan-result-modal').classList.remove('active');
   scannedGuestObj=null;
   setTimeout(()=>{ if(html5QrcodeScanner) html5QrcodeScanner.resume(); },1000);
