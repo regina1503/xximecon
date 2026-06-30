@@ -531,17 +531,74 @@ const STORAGE_KEY  = 'event_guests_v5';
 const SETTINGS_KEY = 'event_settings_v5';
 
 const defaultGuests = [
-  {id:'g001',name:'Ana Martínez López',  status:'pending',dietary:'',allowedPasses:2,adults:2,kids:0,pax:2,checkedIn:false},
-  {id:'g002',name:'Carlos Mendoza',       status:'pending',dietary:'',allowedPasses:3,adults:2,kids:1,pax:3,checkedIn:false},
-  {id:'g003',name:'Laura Jiménez',        status:'pending',dietary:'',allowedPasses:2,adults:2,kids:0,pax:2,checkedIn:false},
-  {id:'g004',name:'Roberto García Soto',  status:'pending',dietary:'',allowedPasses:4,adults:2,kids:2,pax:4,checkedIn:false},
-  {id:'g005',name:'Fernanda López',       status:'pending',dietary:'',allowedPasses:2,adults:2,kids:0,pax:2,checkedIn:false},
-  {id:'g006',name:'Miguel Ángel Torres',  status:'pending',dietary:'',allowedPasses:2,adults:2,kids:0,pax:2,checkedIn:false},
-  {id:'g007',name:'Patricia Ruiz',        status:'pending',dietary:'',allowedPasses:2,adults:1,kids:1,pax:2,checkedIn:false},
-  {id:'g008',name:'Javier Hernández',     status:'pending',dietary:'',allowedPasses:3,adults:3,kids:0,pax:3,checkedIn:false},
-  {id:'g009',name:'Diana Castillo',       status:'pending',dietary:'',allowedPasses:2,adults:2,kids:0,pax:2,checkedIn:false},
-  {id:'g010',name:'Eduardo Reyes',        status:'pending',dietary:'',allowedPasses:2,adults:2,kids:0,pax:2,checkedIn:false},
-  {id:'g011',name:'Regina Contreras',     status:'pending',dietary:'',allowedPasses:2,adults:2,kids:0,pax:2,checkedIn:false},
+  {id:'g001',name:'Nancy Riega', status:'pending',dietary:'',allowedPasses:3,adults:2,kids:0,pax:3,checkedIn:false},
+  {id:'g002',name:'Elena Sánchez', status:'pending',dietary:'',allowedPasses:2,adults:1,kids:0,pax:2,checkedIn:false},
+  {id:'g003',name:'Hipolito Sánchez', status:'pending',dietary:'',allowedPasses:3,adults:2,kids:0,pax:3,checkedIn:false},
+  {id:'g004',name:'Margarito Sánchez', status:'pending',dietary:'',allowedPasses:4,adults:3,kids:0,pax:4,checkedIn:false},
+  {id:'g005',name:'Juan Gabriel Sánchez', status:'pending',dietary:'',allowedPasses:2,adults:1,kids:0,pax:2,checkedIn:false},
+  {id:'g006',name:'Florencia Sánchez', status:'pending',dietary:'',allowedPasses:3,adults:2,kids:0,pax:3,checkedIn:false},
+  {id:'g007',name:'Jessica Camacho', status:'pending',dietary:'',allowedPasses:2,adults:0,kids:1,pax:2,checkedIn:false},
+  {id:'g008',name:'Ingrid Catalina Castellón', status:'pending',dietary:'',allowedPasses:1,adults:0,kids:0,pax:1,checkedIn:false},
+  {id:'g009',name:'Isabel Estrada', status:'pending',dietary:'',allowedPasses:1,adults:0,kids:0,pax:1,checkedIn:false},
+  {id:'g010',name:'Clara Alicia Monge', status:'pending',dietary:'',allowedPasses:2,adults:1,kids:0,pax:2,checkedIn:false},
+  {id:'g011',name:'Amado Sánchez', status:'pending',dietary:'',allowedPasses:5,adults:4,kids:0,pax:5,checkedIn:false},
+  {id:'g012',name:'Alondra Arellano', status:'pending',dietary:'',allowedPasses:2,adults:1,kids:0,pax:2,checkedIn:false},
+  {id:'g013',name:'Omar Hernández', status:'pending',dietary:'',allowedPasses:1,adults:0,kids:0,pax:1,checkedIn:false},
+  {id:'g014',name:'Anabel Verde', status:'pending',dietary:'',allowedPasses:1,adults:0,kids:0,pax:1,checkedIn:false},
+  {id:'g015',name:'Miriam Ocampo', status:'pending',dietary:'',allowedPasses:5,adults:1,kids:3,pax:5,checkedIn:false},
+  {id:'g016',name:'Jaime Cervantes', status:'pending',dietary:'',allowedPasses:2,adults:1,kids:0,pax:2,checkedIn:false},
+  {id:'g017',name:'Adriana García', status:'pending',dietary:'',allowedPasses:3,adults:2,kids:0,pax:3,checkedIn:false},
+  {id:'g018',name:'Carmen Esquivel', status:'pending',dietary:'',allowedPasses:5,adults:3,kids:1,pax:5,checkedIn:false},
+  {id:'g019',name:'Anna Jolie', status:'pending',dietary:'',allowedPasses:4,adults:3,kids:0,pax:4,checkedIn:false},
+  {id:'g020',name:'Joselin', status:'pending',dietary:'',allowedPasses:1,adults:0,kids:0,pax:1,checkedIn:false},
+  {id:'g021',name:'Miguel Ángel Morales', status:'pending',dietary:'',allowedPasses:1,adults:0,kids:0,pax:1,checkedIn:false},
+  {id:'g022',name:'Abril Bernal', status:'pending',dietary:'',allowedPasses:1,adults:0,kids:0,pax:1,checkedIn:false},
+  {id:'g023',name:'Sofia', status:'pending',dietary:'',allowedPasses:1,adults:0,kids:0,pax:1,checkedIn:false},
+  {id:'g024',name:'Mateo Rogelio Allende', status:'pending',dietary:'',allowedPasses:1,adults:0,kids:0,pax:1,checkedIn:false},
+  {id:'g025',name:'Jesus', status:'pending',dietary:'',allowedPasses:1,adults:0,kids:0,pax:1,checkedIn:false},
+  {id:'g026',name:'Angel Corona', status:'pending',dietary:'',allowedPasses:1,adults:0,kids:0,pax:1,checkedIn:false},
+  {id:'g027',name:'Marcos González', status:'pending',dietary:'',allowedPasses:1,adults:0,kids:0,pax:1,checkedIn:false},
+  {id:'g028',name:'Diego González', status:'pending',dietary:'',allowedPasses:1,adults:0,kids:0,pax:1,checkedIn:false},
+  {id:'g029',name:'Emilio', status:'pending',dietary:'',allowedPasses:1,adults:0,kids:0,pax:1,checkedIn:false},
+  {id:'g030',name:'David', status:'pending',dietary:'',allowedPasses:2,adults:1,kids:0,pax:2,checkedIn:false},
+  {id:'g031',name:'Aranza Magallanes', status:'pending',dietary:'',allowedPasses:4,adults:3,kids:1,pax:4,checkedIn:false},
+  {id:'g032',name:'Renata', status:'pending',dietary:'',allowedPasses:1,adults:0,kids:0,pax:1,checkedIn:false},
+  {id:'g033',name:'Fernanda', status:'pending',dietary:'',allowedPasses:1,adults:0,kids:0,pax:1,checkedIn:false},
+  {id:'g034',name:'Javier Martínez', status:'pending',dietary:'',allowedPasses:1,adults:0,kids:0,pax:1,checkedIn:false},
+  {id:'g035',name:'Francisco Martínez', status:'pending',dietary:'',allowedPasses:2,adults:1,kids:0,pax:2,checkedIn:false},
+  {id:'g036',name:'Francisco Carmona', status:'pending',dietary:'',allowedPasses:1,adults:0,kids:0,pax:1,checkedIn:false},
+  {id:'g037',name:'Fernando Taimanov Martínez', status:'pending',dietary:'',allowedPasses:4,adults:3,kids:0,pax:4,checkedIn:false},
+  {id:'g038',name:'Francezco Lutikov Martínez', status:'pending',dietary:'',allowedPasses:2,adults:1,kids:0,pax:2,checkedIn:false},
+  {id:'g039',name:'Hugo Arturo Carmona Sánchez', status:'pending',dietary:'',allowedPasses:2,adults:1,kids:0,pax:2,checkedIn:false},
+  {id:'g040',name:'Sara Carmona Sánchez', status:'pending',dietary:'',allowedPasses:1,adults:0,kids:0,pax:1,checkedIn:false},
+  {id:'g041',name:'Mayra del Rocío Carmona Sánchez', status:'pending',dietary:'',allowedPasses:1,adults:0,kids:0,pax:1,checkedIn:false},
+  {id:'g042',name:'Guadalupe Elizabeth Morales', status:'pending',dietary:'',allowedPasses:2,adults:0,kids:1,pax:2,checkedIn:false},
+  {id:'g043',name:'Vivian Alexis Morales', status:'pending',dietary:'',allowedPasses:2,adults:0,kids:1,pax:2,checkedIn:false},
+  {id:'g044',name:'Felipe de Jesús Delgadillo', status:'pending',dietary:'',allowedPasses:3,adults:1,kids:1,pax:3,checkedIn:false},
+  {id:'g045',name:'Miguel Angel Villalobos', status:'pending',dietary:'',allowedPasses:3,adults:1,kids:1,pax:3,checkedIn:false},
+  {id:'g046',name:'Manuel Steffano Perez', status:'pending',dietary:'',allowedPasses:2,adults:1,kids:0,pax:2,checkedIn:false},
+  {id:'g047',name:'Mario', status:'pending',dietary:'',allowedPasses:3,adults:2,kids:0,pax:3,checkedIn:false},
+  {id:'g048',name:'Liliana Pérez', status:'pending',dietary:'',allowedPasses:3,adults:2,kids:0,pax:3,checkedIn:false},
+  {id:'g049',name:'Rocío Sánchez', status:'pending',dietary:'',allowedPasses:2,adults:1,kids:0,pax:2,checkedIn:false},
+  {id:'g050',name:'Lourdes', status:'pending',dietary:'',allowedPasses:2,adults:1,kids:0,pax:2,checkedIn:false},
+  {id:'g051',name:'Fernando Flores', status:'pending',dietary:'',allowedPasses:1,adults:0,kids:0,pax:1,checkedIn:false},
+  {id:'g052',name:'Alberto Vivanco', status:'pending',dietary:'',allowedPasses:2,adults:1,kids:0,pax:2,checkedIn:false},
+  {id:'g053',name:'David Ruedas', status:'pending',dietary:'',allowedPasses:2,adults:1,kids:0,pax:2,checkedIn:false},
+  {id:'g054',name:'Jorge Vázquez', status:'pending',dietary:'',allowedPasses:2,adults:1,kids:0,pax:2,checkedIn:false},
+  {id:'g055',name:'Enrique Martínez', status:'pending',dietary:'',allowedPasses:3,adults:2,kids:0,pax:3,checkedIn:false},
+  {id:'g056',name:'Isabel Sánchez', status:'pending',dietary:'',allowedPasses:2,adults:1,kids:0,pax:2,checkedIn:false},
+  {id:'g057',name:'Gina', status:'pending',dietary:'',allowedPasses:2,adults:1,kids:0,pax:2,checkedIn:false},
+  {id:'g058',name:'Gigliola Taide Bernal', status:'pending',dietary:'',allowedPasses:3,adults:2,kids:0,pax:3,checkedIn:false},
+  {id:'g059',name:'Ángel Albarrán', status:'pending',dietary:'',allowedPasses:4,adults:3,kids:0,pax:4,checkedIn:false},
+  {id:'g060',name:'Mario', status:'pending',dietary:'',allowedPasses:3,adults:2,kids:0,pax:3,checkedIn:false},
+  {id:'g061',name:'Bruno Gutiérrez', status:'pending',dietary:'',allowedPasses:2,adults:1,kids:0,pax:2,checkedIn:false},
+  {id:'g062',name:'Daniel', status:'pending',dietary:'',allowedPasses:2,adults:1,kids:0,pax:2,checkedIn:false},
+  {id:'g063',name:'Grecia Sofía Becerril', status:'pending',dietary:'',allowedPasses:1,adults:0,kids:0,pax:1,checkedIn:false},
+  {id:'g064',name:'Hilda Castro', status:'pending',dietary:'',allowedPasses:4,adults:3,kids:0,pax:4,checkedIn:false},
+  {id:'g065',name:'Manuel Alejandro Sánchez', status:'pending',dietary:'',allowedPasses:3,adults:2,kids:0,pax:3,checkedIn:false},
+  {id:'g066',name:'Perla Carmona', status:'pending',dietary:'',allowedPasses:2,adults:1,kids:0,pax:2,checkedIn:false},
+  {id:'g067',name:'Yesica Paola Sánchez', status:'pending',dietary:'',allowedPasses:3,adults:2,kids:0,pax:3,checkedIn:false},
+  {id:'g068',name:'Karina Santillana', status:'pending',dietary:'',allowedPasses:1,adults:0,kids:0,pax:1,checkedIn:false},
 ];
 
 const THEME_PRESETS = [
@@ -578,7 +635,7 @@ let html5QrcodeScanner=null, scannedGuestObj=null;
 let editingGuestId = null;
 let qrCodeInstance = null;
 let settings = {
-  eventType:'boda', eventName:'', person1:'', person2:'', eventDate:'', eventTime:'',
+  eventType:'xv', eventName:'Mis XV Años Ximena Eleonor', person1:'Ximena Eleonor', person2:'', eventDate:'Dom. 26 Jul 2026', eventTime:'',
   adminPin:'1402', passType:'adultokid',
   theme:THEME_PRESETS[0], fontDisplay:'Cormorant Garamond', fontBody:'Jost'
 };
@@ -616,11 +673,12 @@ function applySettings(){
   document.documentElement.style.setProperty('--font-display',"'"+settings.fontDisplay+"',serif");
   document.documentElement.style.setProperty('--font-body',"'"+settings.fontBody+"',sans-serif");
 
-  // Header title based on event type
+  // Header title: prefer the explicit event name set by the host; fall back to honoree name(s) or event type
   const p1 = settings.person1||'';
   const p2 = settings.person2||'';
   let titleHTML = '';
-  if(p1 && p2) titleHTML = `<em>${p1}</em> &amp; <em>${p2}</em>`;
+  if(settings.eventName) titleHTML = `<em>${settings.eventName}</em>`;
+  else if(p1 && p2) titleHTML = `<em>${p1}</em> &amp; <em>${p2}</em>`;
   else if(p1)  titleHTML = `<em>${p1}</em>`;
   else          titleHTML = `<em>${getEventTypeName(settings.eventType||'otro')}</em>`;
   document.getElementById('header-title').innerHTML = titleHTML;
@@ -734,6 +792,9 @@ function applyPreset(i){
 }
 
 function saveSettings(){
+  const pin=document.getElementById('admin-pin-input').value.trim();
+  const pinValid = pin.length===4 && /^\d+$/.test(pin);
+
   settings.eventType  = document.getElementById('setting-event-type').value;
   settings.eventName  = document.getElementById('event-name-input').value.trim();
   settings.person1    = document.getElementById('setting-person1').value.trim();
@@ -744,9 +805,7 @@ function saveSettings(){
   settings.fontDisplay= document.getElementById('setting-font-display').value;
   settings.fontBody   = document.getElementById('setting-font-body').value;
 
-  const pin=document.getElementById('admin-pin-input').value.trim();
-  if(pin.length===4&&/^\d+$/.test(pin)) settings.adminPin=pin;
-  else{ showToast('El PIN debe ser exactamente 4 números','ti-alert-circle'); return; }
+  if(pinValid) settings.adminPin=pin;
 
   const accent =document.getElementById('color-accent').value;
   const bg     =document.getElementById('color-bg').value;
@@ -757,7 +816,12 @@ function saveSettings(){
   saveSettingsData();
   applySettings();
   renderThemePresets();
-  showToast('Configuración guardada','ti-circle-check');
+
+  if(!pinValid){
+    showToast('Guardado, pero el PIN debe tener 4 números (no se cambió)','ti-alert-circle');
+  } else {
+    showToast('Configuración guardada','ti-circle-check');
+  }
 }
 
 /* ══════════════════════════════════════════════════════════
